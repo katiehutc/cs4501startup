@@ -1,0 +1,22 @@
+## Alex for finance interview practice
+Original startup: Alex (formerly Apriora) is an AI recruiter that conducts candidate interviews, screening, and scheduling over voice, video, and text for employers. Link: https://www.ycombinator.com/companies/apriora
+
+Proposed startup: An AI mock interviewer for college students preparing for investment banking and finance interviews. Instead of screening candidates for employers, it flips the model to serve candidates. It runs realistic voice interviews with technical questions (accounting, valuation, DCF, LBO) and behavioral questions, asks follow-ups based on the student's answers, and returns a scored rubric with specific feedback after every session.
+
+Criteria:
+1. Solves one problem extremely well:
+Gives finance candidates unlimited realistic interview practice with accurate feedback. Students today practice with question guides or a friend reading questions aloud, so they rarely get pressure-tested follow-ups or reliable corrections. The product focuses only on finance interviews, so its questions, follow-ups, and grading can be held to a much higher standard than a general-purpose interview bot.
+2. Access to target customers:
+Students recruiting for IB, consulting, and finance roles are directly accessible through UVA classmates, McIntire, and finance and investment clubs. These students are actively preparing for interviews and can test the tool in the weeks before their real interviews. Club leaders who run mock interview programs are a second group we can reach.
+3. Familiarity with infrastructure:
+The MVP can use a React/Next.js frontend, the browser's microphone with a speech-to-text API (e.g., Whisper or Deepgram), a text-to-speech API for the interviewer's voice, a Python (FastAPI) backend, PostgreSQL through Supabase, and an LLM API with structured JSON output. The speech APIs are new to us but well documented.
+4. Reimagines the problem space:
+Existing prep tools are static: a list of questions with sample answers that students memorize. This tool is interactive. It adapts follow-ups to what the student actually said ("You said EBITDA is a proxy for cash flow. What does it leave out?"), raises the difficulty as the student improves, and tracks weak areas across sessions. Students practice the live back-and-forth of a real interview instead of reciting answers.
+5. LLM is core to the solution:
+The LLM plays the interviewer: it chooses questions, asks follow-ups based on the student's spoken answers, and keeps a realistic conversational flow. After the session, it evaluates each answer against a rubric and writes specific feedback. Without the LLM, the product would be a fixed question list with no follow-ups and no feedback on free-form spoken answers.
+6. Validation guardrail:
+Every LLM output must pass a validator before the user sees it. Questions must come from, or match a topic and difficulty in, a vetted finance question bank; this prevents incorrect or made-up technical questions. Feedback on technical answers is checked against a vetted answer key, and numeric answers are recomputed by deterministic code. For example, a $10 depreciation increase at a 25% tax rate is computed by our own 3-statement rule engine, and the LLM's stated correct answer must match. Every rubric score must cite a direct quote from the student's transcript, so feedback can't criticize something the student never said. Scores must fall within the rubric's defined ranges, and the report must match a JSON schema.
+7. Self-correction loop:
+Validation errors are automatically sent back to the LLM with the transcript, the answer key, and the failed fields. For example: "your stated net income change is -$10, but the rule engine computed -$7.50," or "this score cites a quote that does not appear in the transcript." The model regenerates within a fixed retry limit. If an answer still fails, that item is marked for "self-review" with the vetted answer key shown instead of unverified feedback. Failures are logged by type to improve prompts and expand the answer key.
+8. Deployability:
+The full product can be deployed with a hosted frontend (Vercel), a backend (Render), Supabase for the database and auth, and hosted speech and LLM APIs, so there is no model hosting to manage. The question bank and answer key start as a curated set of common IB technical and behavioral questions that the team writes and verifies. Text-only mode can serve as a fallback to limit speech-API costs during the beta.
