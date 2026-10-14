@@ -1,10 +1,9 @@
 ## Retrofit for college students recreating outfits from photos
-Original startup: Retrofit uses AI to personalize vintage clothing discovery based on users' style, size, budget, and trends. 
-
-Y Combinator
+Original startup: Retrofit uses AI to personalize vintage clothing discovery based on users' style, size, budget, and trends. Link: https://www.ycombinator.com/companies/retrofit 
 
 Proposed startup: An AI-powered shopping tool that helps college students recreate outfits from Pinterest, Instagram, or other inspiration photos using affordable and secondhand clothing.
-How it satisfies the 8 criteria:
+
+Criteria:
 1. Solves one problem extremely well
 Helps college students find affordable clothing items that closely match an outfit in a photo, without manually searching multiple shopping websites.
 2. Access to target customers
