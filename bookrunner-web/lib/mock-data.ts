@@ -1,0 +1,165 @@
+import type { Contact, Draft, Firm, Task } from "./types";
+
+// Fictional people at real banks, for the demo only.
+
+export const FIRMS: Firm[] = [
+  { id: "gs", name: "Goldman Sachs", tier: "Bulge bracket", aliases: ["GS"] },
+  { id: "ms", name: "Morgan Stanley", tier: "Bulge bracket", aliases: ["MS"] },
+  { id: "jpm", name: "J.P. Morgan", tier: "Bulge bracket", aliases: ["JPM"] },
+  { id: "evr", name: "Evercore", tier: "Elite boutique", aliases: ["EVR"] },
+  { id: "laz", name: "Lazard", tier: "Elite boutique", aliases: [] },
+  { id: "cvp", name: "Centerview", tier: "Elite boutique", aliases: ["CVP"] },
+  { id: "pjt", name: "PJT Partners", tier: "Elite boutique", aliases: ["PJT"] },
+  { id: "moelis", name: "Moelis", tier: "Elite boutique", aliases: [] },
+  { id: "gugg", name: "Guggenheim Securities", tier: "Middle market", aliases: ["GS"] },
+  { id: "hl", name: "Houlihan Lokey", tier: "Middle market", aliases: ["HL"] },
+];
+
+export const CONTACTS: Contact[] = [
+  {
+    id: "jake",
+    name: "Jake R.",
+    title: "Analyst (2nd yr)",
+    firmId: "gs",
+    group: "TMT",
+    city: "San Francisco",
+    stage: "chatted",
+    notes:
+      "Coffee chat Oct 20. Jake explained how the TMT group staffs analysts in San Francisco. Offered to connect me with Priya, his VP. Said follow up in a month.",
+    timeline: [
+      { date: "2026-11-19", text: "Follow-up planned" },
+      { date: "2026-10-20", text: "Coffee chat, 30 min. Notes saved." },
+      { date: "2026-10-14", text: "He replied, chat booked" },
+      { date: "2026-10-12", text: "Cold email sent" },
+    ],
+    status: "Thank-you not sent",
+    urgent: true,
+  },
+  {
+    id: "priya",
+    name: "Priya S.",
+    title: "VP",
+    firmId: "gs",
+    group: "TMT",
+    city: "San Francisco",
+    stage: "to_reach",
+    referredBy: "jake",
+    notes: "",
+    timeline: [{ date: "2026-10-20", text: "Jake offered an intro" }],
+    status: "Referred by Jake",
+  },
+  {
+    id: "maya",
+    name: "Maya L.",
+    title: "Analyst",
+    firmId: "evr",
+    group: "M&A",
+    city: "New York",
+    stage: "chat_booked",
+    notes: "From her profile: UVA alum. Summer analyst at Houlihan Lokey before joining Evercore M&A.",
+    timeline: [
+      { date: "2026-10-21", text: "Coffee chat, 4:00 PM on Zoom" },
+      { date: "2026-10-16", text: "She replied, chat booked" },
+      { date: "2026-10-15", text: "Cold email sent" },
+    ],
+    status: "Today · 4:00 PM",
+  },
+  {
+    id: "sam",
+    name: "Sam T.",
+    title: "Analyst",
+    firmId: "laz",
+    group: "Restructuring",
+    city: "New York",
+    stage: "emailed",
+    notes: "",
+    timeline: [{ date: "2026-10-13", text: "Cold email sent" }],
+    status: "No reply · 8 days",
+    urgent: true,
+  },
+  {
+    id: "lena",
+    name: "Lena W.",
+    title: "Analyst",
+    firmId: "ms",
+    group: "Healthcare",
+    city: "New York",
+    stage: "emailed",
+    notes: "",
+    timeline: [{ date: "2026-10-19", text: "Cold email sent" }],
+    status: "Sent Oct 19",
+  },
+  {
+    id: "alex",
+    name: "Alex K.",
+    title: "Associate",
+    firmId: "moelis",
+    group: "M&A",
+    city: "New York",
+    stage: "to_reach",
+    notes: "",
+    timeline: [],
+    status: "UVA alum",
+  },
+  {
+    id: "nora",
+    name: "Nora P.",
+    title: "Analyst",
+    firmId: "cvp",
+    group: "M&A",
+    city: "San Francisco",
+    stage: "chatted",
+    notes: "Coffee chat Oct 9. Talked about the SF office. Said to check in before applications open.",
+    timeline: [
+      { date: "2026-10-09", text: "Coffee chat. Thank-you sent." },
+      { date: "2026-10-02", text: "Cold email sent" },
+    ],
+    status: "Follow up Oct 26",
+  },
+  {
+    id: "dev",
+    name: "Dev M.",
+    title: "VP",
+    firmId: "pjt",
+    group: "Restructuring",
+    city: "New York",
+    stage: "referral",
+    notes: "Second call Oct 8. Said he would pass my resume to recruiting.",
+    timeline: [
+      { date: "2026-10-08", text: "Second call. Offered to refer you." },
+      { date: "2026-09-24", text: "First call" },
+    ],
+    status: "Passed resume to recruiting",
+  },
+];
+
+export const TASKS: Task[] = [
+  { id: "t1", contactId: "jake", kind: "thank_you", due: "2026-10-20", label: "Thank-you to Jake R." },
+  { id: "t2", contactId: "maya", kind: "chat", due: "2026-10-21", time: "4:00 PM", label: "Coffee chat with Maya L." },
+  { id: "t3", contactId: "priya", kind: "reach_out", due: "2026-10-21", label: "Reach out to Priya S." },
+  { id: "t4", contactId: "sam", kind: "follow_up", due: "2026-10-21", label: "Follow up with Sam T." },
+  { id: "t5", contactId: "nora", kind: "follow_up", due: "2026-10-26", label: "Check in with Nora P." },
+  { id: "t6", contactId: "lena", kind: "follow_up", due: "2026-10-26", label: "Follow up with Lena W." },
+  { id: "t7", contactId: "jake", kind: "follow_up", due: "2026-11-19", label: "Check in with Jake R." },
+];
+
+export const DRAFTS: Draft[] = [
+  {
+    contactId: "jake",
+    greetingName: "Jake",
+    paragraphs: [
+      "Thanks again for making time yesterday. It was really helpful to hear how the TMT group staffs analysts in San Francisco, and I appreciate you offering to connect me with Priya.",
+      "I'll reach out to her this week and will check back in with you next month.",
+    ],
+    claims: [
+      {
+        text: "how the TMT group staffs analysts in San Francisco",
+        evidence: "how the TMT group staffs analysts in San Francisco",
+      },
+      { text: "offering to connect me with Priya", evidence: "Offered to connect me with Priya" },
+      { text: "check back in with you next month", evidence: "follow up in a month" },
+    ],
+    signoff: "Best,",
+    removed: ["a line congratulating him on a deal your notes don't mention"],
+  },
+];
