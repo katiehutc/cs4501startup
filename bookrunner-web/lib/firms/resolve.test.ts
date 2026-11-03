@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveFirm } from "./resolve";
 import { FIRMS, GROUPS, TITLES } from "./data";
 
-describe("#30 resolveFirm", () => {
+describe("#40 resolveFirm", () => {
   it("[ai] matches a full firm name", () => {
     const result = resolveFirm("Goldman Sachs");
 
