@@ -1,0 +1,13 @@
+{
+  "id": "note-06",
+  "note": "Lauren, VP at JPM TMT in SF. follow up in a month. sent thank you",
+  "expected": {
+    "name": "Lauren",
+    "title": "VP",
+    "firm": "J.P. Morgan",
+    "group": "TMT",
+    "city": "San Francisco",
+    "followUpDays": 30,
+    "referrals": []
+  }
+}

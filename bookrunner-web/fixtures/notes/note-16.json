@@ -1,0 +1,14 @@
+{
+  "id": "note-16",
+  "note": "Alex Wade at Arsenal Capital, UVA SAE. no follow up needed",
+  "expected": {
+    "name": "Alex Wade",
+    "title": null,
+    "firm": "UNKNOWN",
+    "group": null,
+    "city": null,
+    "followUpDays": null,
+    "referrals": []
+  },
+  "tricky": "firm not in our bank data (PE fund): expect unknown, never invent a bank"
+}

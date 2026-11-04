@@ -1,0 +1,18 @@
+{
+  "id": "note-11",
+  "note": "Davis Burke, GS analyst, mcintire. the man. putting me in touch w/ two more GS guys. call again in 9 days",
+  "expected": {
+    "name": "Davis Burke",
+    "title": "Analyst",
+    "firm": "AMBIGUOUS",
+    "group": null,
+    "city": null,
+    "followUpDays": 9,
+    "referrals": [],
+    "firmOptions": [
+      "Goldman Sachs",
+      "Guggenheim Securities"
+    ]
+  },
+  "tricky": "ambiguous GS again; unnamed referrals must not be invented"
+}
