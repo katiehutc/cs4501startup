@@ -1,0 +1,14 @@
+{
+  "id": "note-03",
+  "note": "call w/ sam from PWP rx, 2nd yr associate in houston, talked energy rx and his path from mcintire",
+  "expected": {
+    "name": "Sam",
+    "title": "Associate",
+    "firm": "Perella Weinberg Partners",
+    "group": "Restructuring",
+    "city": "Houston",
+    "followUpDays": null,
+    "referrals": []
+  },
+  "tricky": "no follow-up"
+}

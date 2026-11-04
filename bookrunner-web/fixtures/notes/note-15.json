@@ -1,0 +1,21 @@
+{
+  "id": "note-15",
+  "note": "Josh Feng GS real estate, formerly in regal, now moving to growth equity. reach back out in 6 wks",
+  "expected": {
+    "name": "Josh Feng",
+    "title": null,
+    "firm": "AMBIGUOUS",
+    "group": "Real Estate",
+    "city": null,
+    "followUpDays": 42,
+    "referrals": [],
+    "firmOptions": [
+      "Goldman Sachs",
+      "Guggenheim Securities"
+    ],
+    "flags": [
+      "POSSIBLE_MOVE: may be moving to Growth Equity; keep Real Estate until confirmed"
+    ]
+  },
+  "tricky": "GS real estate is ambiguous (both firms have RE). Group stays Real Estate, with a possible-move flag"
+}

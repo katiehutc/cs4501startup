@@ -1,0 +1,13 @@
+{
+  "id": "note-05",
+  "note": "Marcus, analyst at Evercore M&A, super helpful on technicals. follow up in 2 wks",
+  "expected": {
+    "name": "Marcus",
+    "title": "Analyst",
+    "firm": "Evercore",
+    "group": "M&A",
+    "city": null,
+    "followUpDays": 14,
+    "referrals": []
+  }
+}

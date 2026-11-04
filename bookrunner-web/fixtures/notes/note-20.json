@@ -1,0 +1,14 @@
+{
+  "id": "note-20",
+  "note": "Jack Ames, Jeff CNR associate (W&L), through Emmett. said he'd intro me to more people, follow up in a week",
+  "expected": {
+    "name": "Jack Ames",
+    "title": "Associate",
+    "firm": "Jefferies",
+    "group": "Consumer & Retail",
+    "city": null,
+    "followUpDays": 7,
+    "referrals": []
+  },
+  "tricky": "referrer mentioned (Emmett) is not a referral FROM this contact"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "note-14",
+  "note": "Maureen Fahey, analyst at Cannacord (CGF), connected thru Maurice Webb (MD there). follow up monday",
+  "expected": {
+    "name": "Maureen Fahey",
+    "title": "Analyst",
+    "firm": "Canaccord Genuity",
+    "group": null,
+    "city": null,
+    "followUpDays": null,
+    "referrals": []
+  },
+  "tricky": "misspelled firm (Cannacord) and a relative date"
+}

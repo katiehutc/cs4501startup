@@ -1,0 +1,13 @@
+{
+  "id": "note-07",
+  "note": "Ben, Lazard rx analyst NY, said check back in 10 days",
+  "expected": {
+    "name": "Ben",
+    "title": "Analyst",
+    "firm": "Lazard",
+    "group": "Restructuring",
+    "city": "New York",
+    "followUpDays": 10,
+    "referrals": []
+  }
+}

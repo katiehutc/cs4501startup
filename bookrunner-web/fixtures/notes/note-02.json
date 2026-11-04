@@ -1,0 +1,15 @@
+{
+  "id": "note-02",
+  "note": "coffee w/ Priya (VP, MS M&A), grew up in Richmond too. her analyst Jordan runs the UVA recruiting list, reach out next week",
+  "expected": {
+    "name": "Priya",
+    "title": "VP",
+    "firm": "Morgan Stanley",
+    "group": "M&A",
+    "city": null,
+    "followUpDays": 7,
+    "referrals": [
+      "Jordan"
+    ]
+  }
+}

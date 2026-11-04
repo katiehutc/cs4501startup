@@ -1,0 +1,15 @@
+{
+  "id": "note-12",
+  "note": "Sarah Dunn, Citi DCM analyst. put me in touch w/ Vincent Tessler. sent thanks",
+  "expected": {
+    "name": "Sarah Dunn",
+    "title": "Analyst",
+    "firm": "Citigroup",
+    "group": "DCM",
+    "city": null,
+    "followUpDays": null,
+    "referrals": [
+      "Vincent Tessler"
+    ]
+  }
+}

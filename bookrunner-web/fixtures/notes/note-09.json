@@ -1,0 +1,14 @@
+{
+  "id": "note-09",
+  "note": "talked to Jamie Kerr, chief of staff at Truist, gonzaga alum. follow up in jan right before apps, he'll connect me w/ an MD",
+  "expected": {
+    "name": "Jamie Kerr",
+    "title": null,
+    "firm": "Truist Securities",
+    "group": null,
+    "city": null,
+    "followUpDays": null,
+    "referrals": []
+  },
+  "tricky": "non-ladder title (chief of staff)"
+}

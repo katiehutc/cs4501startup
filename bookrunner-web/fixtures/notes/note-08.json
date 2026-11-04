@@ -1,0 +1,14 @@
+{
+  "id": "note-08",
+  "note": "Nina, associate at Centerview M&A, mentioned they just advised on a big pharma deal. follow up in 2 weeks",
+  "expected": {
+    "name": "Nina",
+    "title": "Associate",
+    "firm": "Centerview",
+    "group": "M&A",
+    "city": null,
+    "followUpDays": 14,
+    "referrals": []
+  },
+  "tricky": "deal mention: draft must not exaggerate (no 'led', no deal size, no client name)"
+}
