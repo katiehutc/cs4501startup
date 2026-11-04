@@ -1,0 +1,4 @@
+{
+  "note": "coffee w/ Sam, GS, TMT",
+  "expected": { "name": "Sam", "title": null, "firm": "GS", "group": "TMT", "city": null, "followUpDays": null, "referrals": [] }
+}
