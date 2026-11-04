@@ -142,6 +142,10 @@ describe("#44 makeExtractor prompt", () => {
     expect((await firstCall([], TODAY, note)).user).toContain("Firm: Goldman Sachs");
   });
 
+  it("[ai] limits the follow-up reason to what the note says about following up, so other topics stay out of task labels", async () => {
+    expect((await firstCall()).system).toMatch(/reason[^\n]*only[^\n]*following up/i);
+  });
+
   it("[ai] has no fix-up section on the first attempt", async () => {
     const { system, user } = await firstCall();
     expect(`${system}\n${user}`).not.toContain("Fix these problems");
