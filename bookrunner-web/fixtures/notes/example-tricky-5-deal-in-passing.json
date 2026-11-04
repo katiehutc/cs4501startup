@@ -1,4 +1,0 @@
-{
-  "note": "talked to Maya, associate JPM healthcare NY, she mentioned the Acme deal in passing, follow up in 2 wks",
-  "expected": { "name": "Maya", "title": "Associate", "firm": "JPM", "group": "healthcare", "city": "New York", "followUpDays": 14, "referrals": [] }
-}

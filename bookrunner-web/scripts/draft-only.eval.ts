@@ -2,10 +2,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { it } from "vitest";
-import { resolveFirm } from "../lib/firms/resolve";
 import { ClaudeClient } from "../lib/llm/client";
 import { makeDraftWriter } from "../lib/llm/draft";
-import type { Contact, Firm } from "../lib/types";
+import type { Contact } from "../lib/types";
 import type { ExpectedFields } from "./eval-score";
 
 const MODEL = "claude-sonnet-5-5";
@@ -16,11 +15,10 @@ interface Fixture {
   expected: ExpectedFields;
 }
 
-function firmFor(text: string): Firm | null {
-  const match = resolveFirm(text);
-  if (match.kind === "match") return match.firm;
+function firmNameFor(expected: ExpectedFields): string | null {
+  if (expected.firm === "UNKNOWN") return null;
   // A spot check only: the real pipeline asks the student instead of picking the first option.
-  return match.kind === "ambiguous" ? match.options[0] : null;
+  return expected.firm === "AMBIGUOUS" ? (expected.firmOptions?.[0] ?? null) : expected.firm;
 }
 
 // Starts from the labeled fields, so a bad draft can't be blamed on a bad extraction.
@@ -30,12 +28,16 @@ it("prints one draft per note from real Claude for reading", async () => {
 
   for (const file of readdirSync(FIXTURES).filter((name) => name.endsWith(".json")).sort()) {
     const { note, expected } = JSON.parse(readFileSync(join(FIXTURES, file), "utf8")) as Fixture;
-    const firm = firmFor(expected.firm);
+    const firmName = firmNameFor(expected);
+    if (firmName === null) {
+      console.log(`\n${file}: skipped, no firm to write to`);
+      continue;
+    }
     const contact: Contact = {
       id: "unsaved",
       name: expected.name,
       title: expected.title ?? "",
-      firmId: firm?.name ?? expected.firm,
+      firmId: firmName,
       group: expected.group ?? "",
       city: expected.city ?? "",
       stage: "chatted",

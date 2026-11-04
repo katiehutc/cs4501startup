@@ -1,4 +1,4 @@
-import type { Extraction, PipelineResult } from "../lib/contracts";
+import type { Extraction, FirmResolver, PipelineResult } from "../lib/contracts";
 
 export interface ExpectedFields {
   name: string;
@@ -8,6 +8,8 @@ export interface ExpectedFields {
   city: string | null;
   followUpDays: number | null;
   referrals: string[];
+  firmOptions?: string[];
+  flags?: string[];
 }
 
 export interface FieldScore {
@@ -42,12 +44,24 @@ function sameNames(a: string[], b: string[]): boolean {
   return sorted(a) === sorted(b);
 }
 
-export function scoreExtraction(expected: ExpectedFields, extraction: Extraction): FieldScore {
+// The labels hold what the app should conclude, so this scores the resolved firm rather than the note's text.
+function firmIsCorrect(expected: ExpectedFields, firmText: string, resolve: FirmResolver): boolean {
+  const match = resolve(firmText);
+  if (expected.firm === "UNKNOWN") {
+    return match.kind === "unknown";
+  }
+  if (expected.firm === "AMBIGUOUS") {
+    return match.kind === "ambiguous" && sameNames(expected.firmOptions ?? [], match.options.map((firm) => firm.name));
+  }
+  return match.kind === "match" && sameText(expected.firm, match.firm.name);
+}
+
+export function scoreExtraction(expected: ExpectedFields, extraction: Extraction, resolve: FirmResolver): FieldScore {
   const { contact, followUp, referrals } = extraction;
   const checks: [string, boolean][] = [
     ["name", sameText(expected.name, contact.name)],
     ["title", sameText(expected.title, contact.title)],
-    ["firm", sameText(expected.firm, contact.firmText)],
+    ["firm", firmIsCorrect(expected, contact.firmText, resolve)],
     ["group", sameText(expected.group, contact.group)],
     ["city", sameText(expected.city, contact.city)],
     ["followUpDays", expected.followUpDays === (followUp?.afterDays ?? null)],
