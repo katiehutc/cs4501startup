@@ -133,6 +133,15 @@ describe("#44 makeExtractor prompt", () => {
     expect((await firstCall()).system).toMatch(/3 wks.*21/);
   });
 
+  it("[ai] tells the model a Firm: line at the end of the note settles the firm", async () => {
+    expect((await firstCall()).system).toMatch(/"Firm:" line[^\n]*firmText/);
+  });
+
+  it("[ai] keeps the student's firm answer in the prompt", async () => {
+    const note = "coffee w/ Sam, GS, TMT\nFirm: Goldman Sachs";
+    expect((await firstCall([], TODAY, note)).user).toContain("Firm: Goldman Sachs");
+  });
+
   it("[ai] has no fix-up section on the first attempt", async () => {
     const { system, user } = await firstCall();
     expect(`${system}\n${user}`).not.toContain("Fix these problems");
