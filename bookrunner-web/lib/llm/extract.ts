@@ -61,7 +61,7 @@ Rules:
 - group uses the note's shorthand, such as FIG, TMT or M&A, or null if not stated.
 - city is the full city name, so NY becomes New York, or null if not stated.
 - chatDate is YYYY-MM-DD. Work out relative dates from today. If the note gives no date, use today.
-- followUp is null unless the note mentions following up. afterDays is a whole number of days: follow up in 3 wks means 21. reason says why, using the note's words.
+- followUp is null unless the note mentions following up. afterDays is a whole number of days: follow up in 3 wks means 21. reason uses only the note's words about following up. If the note gives no reason, repeat its follow-up phrase, such as follow up in 2 wks.
 - evidence has one item for every non-null extracted field. field is a path: contact.name, contact.title, contact.firmText, contact.group, contact.city, chatDate, followUp, referrals[0].name and so on. quote copies the supporting words from the note verbatim, with no changes to spelling or case. Leave out a field the note gives no words for, such as a chatDate that defaulted to today.
 
 Return JSON matching this schema:
