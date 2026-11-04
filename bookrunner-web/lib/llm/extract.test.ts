@@ -146,6 +146,21 @@ describe("#44 makeExtractor prompt", () => {
     expect((await firstCall()).system).toMatch(/reason[^\n]*only[^\n]*following up/i);
   });
 
+  it.each(["M&A", "FIG", "TMT", "Healthcare", "Industrials", "Consumer & Retail", "Energy", "Real Estate", "Restructuring", "LevFin", "ECM", "DCM"])(
+    "[ai] lists %s as a group name the validator accepts",
+    async (group) => {
+      expect((await firstCall()).system).toContain(group);
+    },
+  );
+
+  it.each([
+    ["rx", "Restructuring"],
+    ["HC", "Healthcare"],
+    ["CNR", "Consumer & Retail"],
+  ])("[ai] tells the model that %s means %s", async (shorthand, group) => {
+    expect((await firstCall()).system).toContain(`${shorthand} means ${group}`);
+  });
+
   it("[ai] has no fix-up section on the first attempt", async () => {
     const { system, user } = await firstCall();
     expect(`${system}\n${user}`).not.toContain("Fix these problems");
