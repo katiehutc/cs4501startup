@@ -1,6 +1,8 @@
 import type { Extraction, Extractor, LlmClient, ValidationError } from "../contracts";
 
 const TITLE_LADDER = ["Analyst", "Associate", "VP", "Director", "MD"];
+// Kept in step with lib/firms by hand, because lib/llm can't import another module's internals.
+const GROUP_NAMES = ["M&A", "FIG", "TMT", "Healthcare", "Industrials", "Consumer & Retail", "Energy", "Real Estate", "Restructuring", "LevFin", "ECM", "DCM"];
 
 const NULLABLE_STRING = { anyOf: [{ type: "string" }, { type: "null" }] };
 
@@ -58,7 +60,7 @@ Rules:
 - firmText is the firm exactly as written in the note: "GS" stays "GS". Never guess a firm, expand an abbreviation or invent one. If no firm is stated, use an empty string. A referral described as the contact's colleague takes the contact's firmText.
 - A "Firm:" line at the end of the note is the student's answer about an unclear firm: use its value as firmText for that person, and quote that line's value as the evidence.
 - title is one of ${TITLE_LADDER.join(", ")}, or null if the note doesn't state it.
-- group uses the note's shorthand, such as FIG, TMT or M&A, or null if not stated.
+- group is one of ${GROUP_NAMES.join(", ")}, or null if not stated. Translate shorthand: rx means Restructuring, HC means Healthcare, CNR means Consumer & Retail. Evidence still quotes the note's own word.
 - city is the full city name, so NY becomes New York, or null if not stated.
 - chatDate is YYYY-MM-DD. Work out relative dates from today. If the note gives no date, use today.
 - followUp is null unless the note mentions following up. afterDays is a whole number of days: follow up in 3 wks means 21. reason uses only the note's words about following up. If the note gives no reason, repeat its follow-up phrase, such as follow up in 2 wks.
