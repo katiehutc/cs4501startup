@@ -123,6 +123,18 @@ describe("#45 makeDraftWriter prompt", () => {
     expect((await promptFor()).system).toMatch(/deal[^\n]*passing/i);
   });
 
+  it("[ai] forbids saying a topic was discussed or enjoyed unless the note says so", async () => {
+    expect((await promptFor()).system).toMatch(/discussed[^\n]*only if the note says so/i);
+  });
+
+  it("[ai] tells the model not to recite the contact's own job details back to them", async () => {
+    expect((await promptFor()).system).toMatch(/recite/i);
+  });
+
+  it("[ai] asks for each claim's text to be a short phrase, not a whole sentence", async () => {
+    expect((await promptFor()).system).toMatch(/short phrase/i);
+  });
+
   it("[ai] forbids placeholders, which the validator rejects", async () => {
     expect((await promptFor()).system).toMatch(/placeholder/i);
   });
