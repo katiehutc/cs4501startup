@@ -1,6 +1,6 @@
 
 import type {
-  Extraction,
+  ExtractedContact,
   ExtractionValidator,
   ValidationError,
 } from "../contracts";
@@ -32,42 +32,108 @@ export const validateExtraction: ExtractionValidator = (
     errors.push({ code, field, message });
   }
 
+
+  function validateContact(
+    contact: unknown,
+    prefix: string,
+  ): void {
+    if (
+      !contact ||
+      typeof contact !== "object" ||
+      Array.isArray(contact)
+    ) {
+      addError("schema", prefix, "Contact must be an object.");
+      return;
+    }
+
+    const c = contact as Partial<ExtractedContact>;
+
+    if (typeof c.name !== "string" || !c.name.trim()) {
+      addError(
+        "schema",
+        `${prefix}.name`,
+        "Contact name is required.",
+      );
+    }
+
+    if (
+      typeof c.firmText !== "string" ||
+      !c.firmText.trim()
+    ) {
+      addError(
+        "schema",
+        `${prefix}.firmText`,
+        "Firm name is required.",
+      );
+    } else {
+      const result = resolveFirm(c.firmText);
+
+      if (result.kind === "unknown") {
+        addError(
+          "firm_unknown",
+          `${prefix}.firmText`,
+          `Unknown firm: ${c.firmText}`,
+        );
+      } else if (result.kind === "ambiguous") {
+        addError(
+          "firm_ambiguous",
+          `${prefix}.firmText`,
+          `Ambiguous firm: ${c.firmText}`,
+        );
+      }
+    }
+
+    for (const field of ["title", "group", "city"] as const) {
+      const value = c[field];
+
+      if (value !== null && typeof value !== "string") {
+        addError(
+          "schema",
+          `${prefix}.${field}`,
+          `${field} must be a string or null.`,
+        );
+      }
+    }
+
+    if (
+      typeof c.title === "string" &&
+      !TITLES.some(
+        (title) =>
+          normalizeWhitespace(title) ===
+          normalizeWhitespace(c.title!),
+      )
+    ) {
+      addError(
+        "title_invalid",
+        `${prefix}.title`,
+        `Invalid banking title: ${c.title}`,
+      );
+    }
+
+    if (
+      typeof c.group === "string" &&
+      !GROUPS.some(
+        (group) =>
+          normalizeWhitespace(group) ===
+          normalizeWhitespace(c.group!),
+      )
+    ) {
+      addError(
+        "group_unknown",
+        `${prefix}.group`,
+        `Unknown banking group: ${c.group}`,
+      );
+    }
+  }
+
+
   // Validate the overall extraction schema.
   if (!x || typeof x !== "object" || Array.isArray(x)) {
     addError("schema", "extraction", "Extraction must be an object.");
     return errors;
   }
 
-  if (!x.contact || typeof x.contact !== "object") {
-    addError("schema", "contact", "Contact must be an object.");
-    return errors;
-  }
-
-  if (
-    typeof x.contact.name !== "string" ||
-    !x.contact.name.trim()
-  ) {
-    addError("schema", "contact.name", "Contact name is required.");
-  }
-
-  if (
-    typeof x.contact.firmText !== "string" ||
-    !x.contact.firmText.trim()
-  ) {
-    addError("schema", "contact.firmText", "Firm name is required.");
-  }
-
-  for (const field of ["title", "group", "city"] as const) {
-    const value = x.contact[field];
-
-    if (value !== null && typeof value !== "string") {
-      addError(
-        "schema",
-        `contact.${field}`,
-        `${field} must be a string or null.`,
-      );
-    }
-  }
+  validateContact(x.contact, "contact");
 
   if (
     typeof x.chatDate !== "string" ||
@@ -82,7 +148,11 @@ export const validateExtraction: ExtractionValidator = (
 
   if (!Array.isArray(x.referrals)) {
     addError("schema", "referrals", "Referrals must be an array.");
-  }
+  } else {
+    x.referrals.forEach((referral, index) => {
+        validateContact(referral, `referrals[${index}]`);
+      });
+    }
 
   if (
     x.followUp !== null &&
@@ -108,57 +178,6 @@ export const validateExtraction: ExtractionValidator = (
     addError("schema", "evidence", "Evidence must be an object.");
   }
 
-  // Validate the firm, group, and title.
-  if (
-    typeof x.contact.firmText === "string" &&
-    x.contact.firmText.trim()
-  ) {
-    const result = resolveFirm(x.contact.firmText);
-
-    if (result.kind === "unknown") {
-      addError(
-        "firm_unknown",
-        "contact.firmText",
-        `Unknown firm: ${x.contact.firmText}`,
-      );
-    } else if (result.kind === "ambiguous") {
-      addError(
-        "firm_ambiguous",
-        "contact.firmText",
-        `Ambiguous firm: ${x.contact.firmText}`,
-      );
-    }
-  }
-
-  if (
-    typeof x.contact.group === "string" &&
-    !GROUPS.some(
-      (group) =>
-        normalizeWhitespace(group) ===
-        normalizeWhitespace(x.contact.group!),
-    )
-  ) {
-    addError(
-      "group_unknown",
-      "contact.group",
-      `Unknown banking group: ${x.contact.group}`,
-    );
-  }
-
-  if (
-    typeof x.contact.title === "string" &&
-    !TITLES.some(
-      (title) =>
-        normalizeWhitespace(title) ===
-        normalizeWhitespace(x.contact.title!),
-    )
-  ) {
-    addError(
-      "title_invalid",
-      "contact.title",
-      `Invalid banking title: ${x.contact.title}`,
-    );
-  }
 
   // Verify that evidence appears in the original note.
   if (
