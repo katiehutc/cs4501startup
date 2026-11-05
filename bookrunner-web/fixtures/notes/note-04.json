@@ -1,0 +1,18 @@
+{
+  "id": "note-04",
+  "note": "quick call w/ alex at GS, said Guggenheim's HC team is hiring, ping him after thanksgiving",
+  "expected": {
+    "name": "Alex",
+    "title": null,
+    "firm": "AMBIGUOUS",
+    "group": "Healthcare",
+    "city": null,
+    "followUpDays": null,
+    "referrals": [],
+    "firmOptions": [
+      "Goldman Sachs",
+      "Guggenheim Securities"
+    ]
+  },
+  "tricky": "ambiguous GS (Goldman vs Guggenheim Securities): expect a question, not a guess"
+}

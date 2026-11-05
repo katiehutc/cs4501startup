@@ -1,0 +1,13 @@
+{
+  "id": "note-13",
+  "note": "Nick Gorski HL industrials, beta at UVA. call next week",
+  "expected": {
+    "name": "Nick Gorski",
+    "title": null,
+    "firm": "Houlihan Lokey",
+    "group": "Industrials",
+    "city": null,
+    "followUpDays": 7,
+    "referrals": []
+  }
+}
