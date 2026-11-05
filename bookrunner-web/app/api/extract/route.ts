@@ -1,36 +1,59 @@
-
+import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
+import type { LlmClient } from "@/lib/contracts";
+import { TODAY } from "@/lib/dates";
+import { ClaudeClient, LlmError } from "@/lib/llm/client";
+import { CLAUDE_MODEL } from "@/lib/llm/model";
 import { runPipeline } from "@/lib/pipeline/run";
 import { makePipelineDeps } from "@/lib/pipeline/server";
+import { makeFakeLlm } from "./fake-llm";
 
-export async function POST(request: Request) {
+class MissingApiKeyError extends Error {
+  constructor() {
+    super("ANTHROPIC_API_KEY is not configured");
+    this.name = "MissingApiKeyError";
+  }
+}
+
+function makeClient(note: string): LlmClient {
+  if (process.env.LLM_FAKE === "1") {
+    return makeFakeLlm(note);
+  }
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return {
+      completeJson: async () => {
+        throw new MissingApiKeyError();
+      },
+    };
+  }
+  return new ClaudeClient(new Anthropic({ apiKey }), { model: CLAUDE_MODEL });
+}
+
+async function readNote(request: Request): Promise<string | null> {
   try {
-    const body = await request.json();
-    const note = body?.note;
+    const body: unknown = await request.json();
+    const note = (body as { note?: unknown } | null)?.note;
+    return typeof note === "string" && note.trim() ? note : null;
+  } catch {
+    return null;
+  }
+}
 
-    if (typeof note !== "string" || !note.trim()) {
-      return NextResponse.json(
-        { error: "Please provide some notes." },
-        { status: 400 }
-      );
-    }
+export async function POST(request: Request): Promise<Response> {
+  const note = await readNote(request);
+  if (note === null) {
+    return NextResponse.json({ error: "Please provide some notes." }, { status: 400 });
+  }
 
-    const today = new Date().toISOString().slice(0, 10);
-
-    const result = await runPipeline(
-      note,
-      today,
-      makePipelineDeps()
-    );
-
-    return NextResponse.json(result);
+  try {
+    return NextResponse.json(await runPipeline(note, TODAY, makePipelineDeps(makeClient(note))));
   } catch (error) {
-    // This is the important line for debugging!
+    // Internal messages can hold raw API responses, so they stay in the server log.
     console.error("Extraction API failed:", error);
-
-    return NextResponse.json(
-      { error: "Unable to process notes right now" },
-      { status: 500 }
-    );
+    if (error instanceof LlmError) {
+      return NextResponse.json({ error: "We couldn't reach Claude. Your notes are safe, so try again." }, { status: 502 });
+    }
+    return NextResponse.json({ error: "Unable to process notes right now. Try again." }, { status: 500 });
   }
 }

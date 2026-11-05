@@ -1,6 +1,8 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PipelineResult } from "../../../lib/contracts";
+import { TODAY } from "../../../lib/dates";
+import { LlmError } from "../../../lib/llm/client";
 
 const mocks = vi.hoisted(() => ({
   runPipeline: vi.fn(),
@@ -25,7 +27,7 @@ function request(body: unknown): Request {
   });
 }
 
-describe("#integration POST /api/extract", () => {
+describe("#48 POST /api/extract", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.makeDeps.mockReturnValue({});
@@ -83,5 +85,28 @@ describe("#integration POST /api/extract", () => {
     const body = await response.json();
     expect(body.error).toBeDefined();
     expect(JSON.stringify(body)).not.toContain("example-secret");
+  });
+
+  it("[ai] passes the demo's fixed date, so saved tasks line up with the Today page", async () => {
+    mocks.runPipeline.mockResolvedValue({ kind: "failed", errors: [], attempts: 3, trace: [] });
+    await POST(request({ note: "Talked with Alex at Goldman Sachs" }));
+    expect(mocks.runPipeline).toHaveBeenCalledWith(expect.any(String), TODAY, expect.anything());
+  });
+
+  it("[ai] returns 502 with a readable message when the LLM fails", async () => {
+    mocks.runPipeline.mockRejectedValue(new LlmError('Claude request failed: 401 {"key":"example-secret"}'));
+    const response = await POST(request({ note: "Talked with Alex at Goldman Sachs" }));
+    expect(response.status).toBe(502);
+    const body = await response.json();
+    expect(body.error).toMatch(/try again/i);
+    expect(JSON.stringify(body)).not.toContain("example-secret");
+  });
+
+  it("[ai] returns 400 rather than 500 for a body that isn't JSON", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/extract", { method: "POST", body: "{not json" }),
+    );
+    expect(response.status).toBe(400);
+    expect(mocks.runPipeline).not.toHaveBeenCalled();
   });
 });
