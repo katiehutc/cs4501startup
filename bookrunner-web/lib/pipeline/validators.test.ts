@@ -168,3 +168,54 @@ it("[ai] rejects invented draft details even without a listed claim", () => {
 });
 
 });
+
+describe("#42 validateDraft", () => {
+  it("[ai] rejects a draft mentioning the wrong firm", () => {
+    const draft: Draft = {
+      contactId: "alex",
+      greetingName: "Alex",
+      paragraphs: [
+        "Thanks for sharing your experience at Morgan Stanley.",
+      ],
+      claims: [],
+      signoff: "Best,",
+      removed: [],
+    };
+
+    const errors = validateDraft(draft, NOTE, contact);
+
+    expect(errors.some((e) => e.code === "recipient_mismatch")).toBe(true);
+  });
+
+  it("[ai] rejects placeholders in the signoff", () => {
+    const draft: Draft = {
+      contactId: "alex",
+      greetingName: "Alex",
+      paragraphs: ["Thanks for chatting!"],
+      claims: [],
+      signoff: "[Your name]",
+      removed: [],
+    };
+
+    const errors = validateDraft(draft, NOTE, contact);
+
+    expect(errors.some((e) => e.code === "placeholder")).toBe(true);
+  });
+
+  it("[ai] accepts a draft mentioning the correct firm", () => {
+    const draft: Draft = {
+      contactId: "alex",
+      greetingName: "Alex",
+      paragraphs: [
+        "Thanks for telling me about your experience at Goldman Sachs.",
+      ],
+      claims: [],
+      signoff: "Best,",
+      removed: [],
+    };
+
+    const errors = validateDraft(draft, NOTE, contact);
+
+    expect(errors).toEqual([]);
+  });
+});

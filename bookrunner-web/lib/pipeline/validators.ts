@@ -6,7 +6,8 @@ import type {
   ValidationError,
 } from "../contracts";
 import type { Draft } from "../types";
-import { GROUPS, TITLES } from "../firms/data";
+import { FIRMS, GROUPS, TITLES } from "../firms/data";
+
 
 function error(
   code: ValidationError["code"],
@@ -188,6 +189,44 @@ export const validateDraft: DraftValidator = (
 
   const body = draft.paragraphs.join("\n");
 
+  const recipientFirm = FIRMS.find(
+  (firm) => firm.id === contact.firmId
+);
+
+const normalize = (value: string) =>
+  value.toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const mentionsFirm = (text: string, name: string) => {
+  const normalizedText = ` ${normalize(text)} `;
+  const normalizedName = normalize(name);
+
+  return normalizedName.length > 0 &&
+    normalizedText.includes(` ${normalizedName} `);
+};
+
+const wrongFirm = FIRMS.find(
+  (firm) =>
+    firm.id !== contact.firmId &&
+    [firm.name, ...firm.aliases].some(
+      (name) =>
+        !recipientFirm?.aliases.includes(name) &&
+        mentionsFirm(body, name)
+    )
+);
+
+if (wrongFirm) {
+  errors.push(
+    error(
+      "recipient_mismatch",
+      "paragraphs",
+      `Draft mentions ${wrongFirm.name}, but the contact belongs to ${recipientFirm?.name ?? "an unknown firm"}`
+    )
+  );
+}
+
   // Conservative check for unsupported specific deal references.
     // This is an additional guardrail, not a complete factuality check.
     const dealTerms = /\b(IPO|merger|acquisition|transaction|deal)\b/gi;
@@ -212,11 +251,11 @@ export const validateDraft: DraftValidator = (
     }
 }
 
-  if (/\[[^\]]+\]/.test(body)) {
+  if (/\[[^\]]+\]/.test(`${body}\n${draft.signoff}`)) {
     errors.push(
-      error("placeholder", "paragraphs", "Draft contains placeholders"),
+        error("placeholder", "paragraphs", "Draft contains placeholders"),
     );
-  }
+ }
 
   for (const claim of draft.claims) {
     if (
