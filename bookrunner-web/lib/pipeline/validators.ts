@@ -43,6 +43,10 @@ function supported(
   // Allow known shorthand expansions.
   const aliases: Record<string, string[]> = {
     "new york": ["ny", "nyc"],
+    "san francisco": ["sf"],
+    "los angeles": ["la"],
+    "chicago": ["chi"],
+    "boston": ["bos"],
     "financial institutions group": ["fig"],
     "healthcare": ["hc"],
     "restructuring": ["rx"],
@@ -103,7 +107,10 @@ export const validateExtraction: ExtractionValidator = (
       const value = person[field];
       if (typeof value === "string" && value.trim()) {
         const path = `${prefix}.${field}`;
-        if (!supported(value, extraction.evidence[path], note)) {
+        // A colleague like "her analyst Jordan" shares a firm the note already supports for the contact.
+        const sharesContactFirm =
+          prefix !== "contact" && field === "firmText" && value === extraction.contact.firmText;
+        if (!sharesContactFirm && !supported(value, extraction.evidence[path], note)) {
           errors.push(
             error("ungrounded", path, `No supporting evidence for ${path}`),
           );

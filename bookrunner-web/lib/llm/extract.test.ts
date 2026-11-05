@@ -161,6 +161,14 @@ describe("#44 makeExtractor prompt", () => {
     expect((await firstCall()).system).toContain(`${shorthand} means ${group}`);
   });
 
+  it("[ai] tells the model that someone merely mentioned isn't a referral", async () => {
+    expect((await firstCall()).system).toMatch(/not a referral[^\n]*connected[^\n]*roommate/i);
+  });
+
+  it("[ai] tells the model to leave parentheses out of the firm text", async () => {
+    expect((await firstCall()).system).toMatch(/firmText[^\n]*parentheses/i);
+  });
+
   it("[ai] has no fix-up section on the first attempt", async () => {
     const { system, user } = await firstCall();
     expect(`${system}\n${user}`).not.toContain("Fix these problems");
