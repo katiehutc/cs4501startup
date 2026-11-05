@@ -126,6 +126,31 @@ describe("#52 scoreExtraction firm labels", () => {
   });
 });
 
+describe("#52 scoreExtraction follow-up tolerance", () => {
+  const withDays = (afterDays: number): Extraction => extraction({ followUp: { afterDays, reason: "r" } });
+  const expected: ExpectedFields = { ...EXPECTED, followUpDays: 75 };
+
+  it("[ai] needs an exact match when a note has no tolerance", () => {
+    expect(scoreExtraction(expected, withDays(74), resolve).misses).toEqual(["followUpDays"]);
+  });
+
+  it.each([72, 75, 78])("[ai] accepts %i days with a tolerance of 3 around 75", (days) => {
+    expect(scoreExtraction(expected, withDays(days), resolve, 3).misses).toEqual([]);
+  });
+
+  it.each([71, 79])("[ai] rejects %i days, just outside a tolerance of 3 around 75", (days) => {
+    expect(scoreExtraction(expected, withDays(days), resolve, 3).misses).toEqual(["followUpDays"]);
+  });
+
+  it("[ai] still counts no follow-up as wrong when one was expected", () => {
+    expect(scoreExtraction(expected, extraction({ followUp: null }), resolve, 3).misses).toEqual(["followUpDays"]);
+  });
+
+  it("[ai] still counts a follow-up as wrong when none was expected", () => {
+    expect(scoreExtraction({ ...EXPECTED, followUpDays: null }, withDays(1), resolve, 3).misses).toEqual(["followUpDays"]);
+  });
+});
+
 describe("#52 summarize", () => {
   const perfect = { correct: 7, total: 7, misses: [] };
   const half = { correct: 3, total: 6, misses: ["name", "title", "city"] };
