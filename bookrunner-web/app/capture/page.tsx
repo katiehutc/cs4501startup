@@ -16,26 +16,42 @@ const KIND_LABEL: Record<ProposalKind, string> = {
   draft: "THANK-YOU DRAFT",
 };
 
+type ValidationIssue = {
+  code: string;
+  field: string;
+  message: string;
+};
+
+type CaptureResult = ExtractionResult & {
+  attempts?: number;
+  trace?: ValidationIssue[][];
+};
+
 function Capture() {
   const params = useSearchParams();
   const { dispatch } = useStore();
   const [note, setNote] = useState(params.get("note") ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<ExtractionResult | null>(null);
+  const [result, setResult] = useState<CaptureResult | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [unchecked, setUnchecked] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState(false);
 
-  const run = async () => {
+  const run = async (firmAnswer?: string, firmId?: string) => {
     setLoading(true);
     setError(null);
     setResult(null);
     setSaved(false);
-    setAnswers({});
+    setAnswers(firmId ? { firm: firmId } : {});
     setUnchecked(new Set());
+
     try {
-      setResult(await extractFromNotes(note));
+      const submittedNote = firmAnswer
+        ? `${note}\nFirm: ${firmAnswer}`
+        : note;
+
+      setResult(await extractFromNotes(submittedNote));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
@@ -78,8 +94,8 @@ function Capture() {
           />
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "space-between", alignItems: "center" }}>
             <button className="btn btn-ghost btn-sm" onClick={() => setNote(SAMPLE_NOTE)}>Use the sample note</button>
-            <button className="btn btn-primary" disabled={!note.trim() || loading} onClick={run}>
-              {loading ? "Reading your notes…" : "Sort it out"}
+            <button className="btn btn-primary" disabled={!note.trim() || loading} onClick={() => void run()}>
+              {loading ? "Reading your notes…" : error ? "Try again" : "Sort it out"}
             </button>
           </div>
           <p className="small muted" style={{ margin: 0 }}>Nothing is saved until you approve it.</p>
@@ -114,7 +130,9 @@ function Capture() {
                         key={o.value}
                         className={`chip${answers[q.id] === o.value ? " on" : ""}`}
                         aria-pressed={answers[q.id] === o.value}
-                        onClick={() => setAnswers((a) => ({ ...a, [q.id]: o.value }))}
+                        onClick={() => {
+                          void run(o.label, o.value);
+                        }}
                       >
                         {o.label}
                       </button>
@@ -122,6 +140,17 @@ function Capture() {
                   </div>
                 </div>
               ))}
+
+              {result.attempts !== undefined && (
+                <div className="small muted">
+                  <p>Checked in {result.attempts} attempts</p>
+                  {result.trace?.flat().map((issue, index) => (
+                    <p key={`${issue.field}-${index}`}>
+                      Fixed: {issue.message}
+                    </p>
+                  ))}
+                </div>
+              )}
 
               <ul className="proposals">
                 {result.proposals.map((p) => (
