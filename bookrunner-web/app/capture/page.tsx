@@ -42,6 +42,8 @@ function Capture() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [unchecked, setUnchecked] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState(false);
+  // What the pipeline validated against, so the contact page's checks use the same text.
+  const [submittedNote, setSubmittedNote] = useState("");
 
   const run = async (firmAnswer?: string, firmId?: string) => {
     setLoading(true);
@@ -52,12 +54,13 @@ function Capture() {
     setUnchecked(new Set());
 
     try {
-      const submittedNote = firmAnswer
+      const noteToSubmit = firmAnswer
         ? `${note}\nFirm: ${firmAnswer}`
         : note;
 
-      const nextResult = await extractFromNotes(submittedNote);
+      const nextResult = await extractFromNotes(noteToSubmit);
 
+      setSubmittedNote(noteToSubmit);
       setResult(nextResult);
 
       if (nextResult.errors?.length) {
@@ -101,7 +104,7 @@ function Capture() {
     dispatch({
       type: "apply_extraction",
       firmId: firmMatch.firm.id,
-      note,
+      note: submittedNote,
       accepted: accepted.map((p) => p.kind),
       acceptedIds: accepted.map((p) => p.id),
       extraction: result.extraction,
