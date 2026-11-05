@@ -94,11 +94,22 @@ describe("#45 makeDraftWriter prompt", () => {
     expect((await promptFor([], CONTACT, note)).user).toContain(note);
   });
 
-  it("[ai] names the contact and the firm's full name, not its id", async () => {
-    const { all } = await promptFor();
-    expect(all).toContain("Chris Lee");
-    expect(all).toContain("Goldman Sachs");
-    expect(all).not.toMatch(/\bgs\b(?! fig)/);
+  it("[ai] names the contact in full", async () => {
+    expect((await promptFor()).all).toContain("Chris Lee");
+  });
+
+  it("[ai] gives the model the firm's name and keeps its internal id out of the prompt", async () => {
+    const contact = { ...CONTACT, firmId: "firm-123" };
+    const lookUp = (id: string): string => (id === "firm-123" ? "Goldman Sachs" : "wrong firm");
+    const client = new FakeLlmClient([RESPONSE]);
+
+    await makeDraftWriter(client, lookUp)(contact, NOTE, []);
+    const { system, user } = client.calls[0];
+    const prompt = `${system}\n${user}`;
+
+    expect(prompt).toContain("Goldman Sachs");
+    expect(prompt).not.toContain("wrong firm");
+    expect(prompt).not.toContain("firm-123");
   });
 
   it("[ai] asks for the contact's first name as the greeting name", async () => {
