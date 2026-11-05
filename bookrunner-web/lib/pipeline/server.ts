@@ -20,7 +20,7 @@ export function makePipelineDeps(): PipelineDeps {
   });
 
   const client = new ClaudeClient(sdk, {
-    model: "claude-sonnet-4-5",
+    model: "claude-sonnet-4-6",
   });
 
   const firmName = (firmId: string): string =>
