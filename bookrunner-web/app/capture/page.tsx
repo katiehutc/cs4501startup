@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { extractFromNotes, SAMPLE_NOTE } from "@/lib/extract";
+import {
+  extractFromNotes,
+  SAMPLE_NOTE,
+  type CaptureExtractionResult,
+} from "@/lib/extract";
 import { useStore } from "@/lib/store";
 import type { ExtractionResult, ProposalKind } from "@/lib/types";
 
@@ -33,7 +37,7 @@ function Capture() {
   const [note, setNote] = useState(params.get("note") ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<CaptureResult | null>(null);
+  const [result, setResult] = useState<CaptureExtractionResult | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [unchecked, setUnchecked] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState(false);
@@ -72,7 +76,13 @@ function Capture() {
 
   const save = () => {
     if (!result) return;
-    dispatch({ type: "apply_extraction", firmId: answers.firm, note, accepted: accepted.map((p) => p.kind) });
+    dispatch({
+      type: "apply_extraction",
+      firmId: answers.firm,
+      note,
+      accepted: accepted.map((p) => p.kind),
+      extraction: result.extraction,
+    });
     setSaved(true);
   };
 

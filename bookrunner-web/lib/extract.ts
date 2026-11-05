@@ -1,4 +1,15 @@
+import type { Extraction } from "./contracts";
 import type { ExtractionResult } from "./types";
+
+export type CaptureExtractionResult = ExtractionResult & {
+  extraction?: Extraction;
+  attempts?: number;
+  trace?: {
+    code: string;
+    field: string;
+    message: string;
+  }[][];
+};
 
 export const SAMPLE_NOTE =
   "talked w/ Chris, 1st yr analyst GS FIG NY. good convo about the group. said follow up in 3 wks and email his associate Dana";
@@ -7,7 +18,10 @@ export const SAMPLE_NOTE =
 // LLM for structured JSON, validates it, and retries on failures before
 // returning. Here we return the result that pipeline would produce for the
 // sample note so the review screen can be built and tested.
-export async function extractFromNotes(text: string): Promise<ExtractionResult> {
+export async function extractFromNotes(
+    text: string
+  ): Promise<CaptureExtractionResult> {
+
   await new Promise((r) => setTimeout(r, 600));
 
   if (!/\bchris\b/i.test(text)) {
