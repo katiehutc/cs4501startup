@@ -185,4 +185,138 @@ describe("#41 validateExtraction", () => {
       message: expect.any(String),
     });
   });
+
+  it("[ai] rejects a referral missing required fields", () => {
+    const extraction = validExtraction();
+
+    extraction.referrals = [
+      { name: "Priya" } as Extraction["referrals"][number],
+    ];
+
+    const errors = validateExtraction(extraction, NOTE, TODAY);
+
+    expect(errors).toContainEqual({
+      code: "schema",
+      field: "referrals[0].firmText",
+      message: expect.any(String),
+    });
+  });
+
+  it("[ai] rejects null referral entries without throwing", () => {
+    const extraction = validExtraction();
+
+    extraction.referrals = [
+      null as unknown as Extraction["referrals"][number],
+    ];
+
+    expect(() =>
+      validateExtraction(extraction, NOTE, TODAY),
+    ).not.toThrow();
+
+    expect(
+      validateExtraction(extraction, NOTE, TODAY).some(
+        (error) => error.code === "schema",
+      ),
+    ).toBe(true);
+  });
+
+  it("[ai] validates referral firm names", () => {
+    const extraction = validExtraction();
+
+    extraction.referrals = [
+      {
+        name: "Priya",
+        title: "VP",
+        firmText: "Imaginary Investment Bank",
+        group: null,
+        city: null,
+      },
+    ];
+
+    const errors = validateExtraction(extraction, NOTE, TODAY);
+
+    expect(errors).toContainEqual({
+      code: "firm_unknown",
+      field: "referrals[0].firmText",
+      message: expect.any(String),
+    });
+  });
+
+  it("[ai] validates referral titles and groups", () => {
+    const extraction = validExtraction();
+
+    extraction.referrals = [
+      {
+        name: "Priya",
+        title: "Chief Coffee Officer",
+        firmText: "Goldman Sachs",
+        group: "Underwater Basket Weaving",
+        city: null,
+      },
+    ];
+
+    const errors = validateExtraction(extraction, NOTE, TODAY);
+
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "title_invalid",
+          field: "referrals[0].title",
+        }),
+        expect.objectContaining({
+          code: "group_unknown",
+          field: "referrals[0].group",
+        }),
+      ]),
+    );
+  });
+
+  it("[ai] rejects malformed evidence without throwing", () => {
+    const extraction = validExtraction();
+
+    extraction.evidence = {
+      "contact.name": null,
+    } as unknown as Extraction["evidence"];
+
+    expect(() =>
+      validateExtraction(extraction, NOTE, TODAY),
+    ).not.toThrow();
+
+    expect(
+      validateExtraction(extraction, NOTE, TODAY).some(
+        (error) => error.code === "schema",
+      ),
+    ).toBe(true);
+  });
+
+  it("[ai] rejects malformed follow-up values", () => {
+    const extraction = validExtraction();
+
+    extraction.followUp = {
+      afterDays: "seven",
+      reason: "Follow up in 7 days",
+    } as unknown as Extraction["followUp"];
+
+    expect(
+      validateExtraction(extraction, NOTE, TODAY).some(
+        (error) => error.code === "schema",
+      ),
+    ).toBe(true);
+  });
+
+  it("[ai] rejects a malformed contact without throwing", () => {
+    const extraction = validExtraction();
+
+    extraction.contact = null as unknown as Extraction["contact"];
+
+    expect(() =>
+      validateExtraction(extraction, NOTE, TODAY),
+    ).not.toThrow();
+
+    expect(
+      validateExtraction(extraction, NOTE, TODAY).some(
+        (error) => error.code === "schema",
+      ),
+    ).toBe(true);
+  });
 });
