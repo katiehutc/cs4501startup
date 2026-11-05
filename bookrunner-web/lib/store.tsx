@@ -4,6 +4,7 @@ import React, { createContext, useContext, useReducer, type ReactNode } from "re
 import type { Extraction } from "./contracts";
 import { CONTACTS, DRAFTS, FIRMS, TASKS } from "./mock-data";
 import type { Contact, Draft, Firm, ProposalKind, Stage, Task } from "./types";
+import { resolveFirm } from "./firms/resolve";
 
 interface State {
   firms: Firm[];
@@ -114,11 +115,14 @@ function applyExtraction(
       }
       const referralId = `contact-${crypto.randomUUID()}`;
 
+      const referralFirm = referral.firmText?.trim();
+      const matchedFirm = referralFirm ? resolveFirm(referralFirm) : null;
+
       contacts.push({
         id: referralId,
         name: referral.name,
         title: referral.title ?? "",
-        firmId,
+        firmId: matchedFirm?.kind === "match" ? matchedFirm.firm.id : "",
         group: referral.group ?? "",
         city: referral.city ?? "",
         stage: "to_reach",

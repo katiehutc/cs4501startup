@@ -115,7 +115,42 @@ describe("#integration extraction and draft validation", () => {
     expect(validateDraft(draft, NOTE, contact)).toContainEqual(
       expect.objectContaining({ code: "recipient_mismatch" })
     );
+
   });
+
+  it("[ai] accepts referrals without a specified firm", () => {
+  const note = "Talked with Chris at Goldman Sachs. He suggested reaching out to Alex Giacone.";
+
+  const extraction: Extraction = {
+    contact: {
+      name: "Chris",
+      title: null,
+      firmText: "Goldman Sachs",
+      group: null,
+      city: null,
+    },
+    chatDate: "2026-11-04",
+    referrals: [
+      {
+        name: "Alex Giacone",
+        title: null,
+        firmText: "",
+        group: null,
+        city: null,
+      },
+    ],
+    followUp: null,
+    evidence: {
+      "contact.name": "Chris",
+      "contact.firmText": "Goldman Sachs",
+      "referrals[0].name": "Alex Giacone",
+    },
+  };
+
+  expect(
+    validateExtraction(extraction, note, "2026-11-04")
+  ).toEqual([]);
+});
 
 it("[ai] rejects malformed referral data without crashing", () => {
   const invalid = {

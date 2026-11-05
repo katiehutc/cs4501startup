@@ -50,6 +50,8 @@ function checkExtraction(extraction: Extraction, note: string, today: string, de
 
 function findFirmQuestion(extraction: Extraction, resolveFirm: FirmResolver): FirmQuestion | null {
   for (const person of [extraction.contact, ...extraction.referrals]) {
+    if (!person.firmText?.trim()) continue;
+
     const match = resolveFirm(person.firmText);
     if (match.kind === "ambiguous") {
       return {
