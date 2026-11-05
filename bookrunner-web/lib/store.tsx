@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useReducer, type ReactNode } from "react";
-import { addDays, TODAY } from "./dates";
+import React, { createContext, useContext, useReducer, type ReactNode } from "react";import { addDays, TODAY } from "./dates";
+import type { Extraction } from "./contracts";
 import { CONTACTS, DRAFTS, FIRMS, TASKS } from "./mock-data";
 import type { Contact, Draft, Firm, ProposalKind, Stage, Task } from "./types";
 
@@ -19,7 +19,13 @@ type Action =
   | { type: "set_stage"; contactId: string; stage: Stage }
   | { type: "set_sender"; name: string }
   | { type: "mark_sent"; contactId: string }
-  | { type: "apply_extraction"; firmId: string; note: string; accepted: ProposalKind[] };
+  | {
+    type: "apply_extraction";
+    firmId: string;
+    note: string;
+    accepted: ProposalKind[];
+    extraction?: Extraction;
+  };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -48,16 +54,85 @@ function reducer(state: State, action: Action): State {
         ),
       };
     case "apply_extraction":
-      return applyExtraction(state, action.firmId, action.note, action.accepted);
+      return applyExtraction(
+        state,
+        action.firmId,
+        action.note,
+        action.accepted,
+        action.extraction
+      );
   }
 }
 
 // Turns the accepted proposals from the sample note into records.
-function applyExtraction(state: State, firmId: string, note: string, accepted: ProposalKind[]): State {
+function applyExtraction(
+  state: State,
+  firmId: string,
+  note: string,
+  accepted: ProposalKind[],
+  extraction?: Extraction
+): State {
   const has = (k: ProposalKind) => accepted.includes(k);
   const contacts = [...state.contacts];
   const tasks = [...state.tasks];
   const drafts = [...state.drafts];
+
+  if (extraction) {
+  const referrer = extraction.contact;
+  const referrerId = `contact-${crypto.randomUUID()}`;
+
+  if (has("new_contact")) {
+    contacts.push({
+      id: referrerId,
+      name: referrer.name,
+      title: referrer.title ?? "",
+      firmId,
+      group: referrer.group ?? "",
+      city: referrer.city ?? "",
+      stage: "chatted",
+      notes: note,
+      timeline: has("log_chat")
+        ? [{ date: extraction.chatDate, text: "Coffee chat. Notes saved." }]
+        : [],
+      status: "Chatted",
+    });
+  }
+
+  if (has("new_lead")) {
+    for (const referral of extraction.referrals) {
+      const referralId = `contact-${crypto.randomUUID()}`;
+
+      contacts.push({
+        id: referralId,
+        name: referral.name,
+        title: referral.title ?? "",
+        firmId,
+        group: referral.group ?? "",
+        city: referral.city ?? "",
+        stage: "to_reach",
+        referredBy: has("new_contact") ? referrerId : undefined,
+        notes: "",
+        timeline: [
+          {
+            date: TODAY,
+            text: `${referrer.name} suggested reaching out`,
+          },
+        ],
+        status: `Referred by ${referrer.name}`,
+      });
+
+      tasks.push({
+        id: `task-${crypto.randomUUID()}`,
+        contactId: referralId,
+        kind: "reach_out",
+        due: addDays(TODAY, 1),
+        label: `Reach out to ${referral.name}`,
+      });
+    }
+  }
+
+  return { ...state, contacts, tasks, drafts };
+}
 
   if (has("new_contact")) {
     contacts.push({
