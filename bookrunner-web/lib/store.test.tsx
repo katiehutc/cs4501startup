@@ -95,6 +95,52 @@ function ApprovalTestStore({
   );
 }
 
+function MarkSentTestStore() {
+  const { state, dispatch } = useStore();
+
+  const alex = state.contacts.find((c) => c.name === "Alex");
+  const thankYouTasks = state.tasks.filter(
+    (task) => task.contactId === alex?.id && task.kind === "thank_you"
+  );
+
+  return (
+    <div>
+      <span data-testid="thank-you-count">{thankYouTasks.length}</span>
+      <span data-testid="alex-status">{alex?.status ?? ""}</span>
+
+      <button
+        onClick={() =>
+          dispatch({
+            type: "apply_extraction",
+            firmId: "gs",
+            note: "Talked with Alex at Goldman Sachs.",
+            accepted: ["new_contact", "draft"],
+            extraction,
+            draft: {
+              contactId: "alex",
+              greetingName: "Alex",
+              paragraphs: ["Thanks for chatting!"],
+              claims: [],
+              signoff: "Best,",
+              removed: [],
+            },
+          })
+        }
+      >
+        Save chat
+      </button>
+
+      <button
+        onClick={() =>
+          alex && dispatch({ type: "mark_sent", contactId: alex.id })
+        }
+      >
+        Mark as sent
+      </button>
+    </div>
+  );
+}
+
 
 describe("#49 referral attribution", () => {
   it("[ai] saves the extracted referrer instead of hardcoding Chris", () => {
@@ -298,3 +344,23 @@ afterEach(() => {
   cleanup();
 });
 
+describe("#50 mark sent", () => {
+  it("[ai] completes the thank-you task when the draft is marked sent", () => {
+    render(
+      <StoreProvider>
+        <MarkSentTestStore />
+      </StoreProvider>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Save chat" }));
+
+    expect(screen.getByTestId("thank-you-count").textContent).toBe("1");
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark as sent" }));
+
+    expect(screen.getByTestId("thank-you-count").textContent).toBe("0");
+    expect(screen.getByTestId("alex-status").textContent).toBe(
+      "Thank-you sent"
+    );
+  });
+});
