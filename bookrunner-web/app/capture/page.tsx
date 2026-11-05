@@ -1,7 +1,6 @@
-import { resolveFirm } from "@/lib/firms/resolve";
-
 "use client";
 
+import { resolveFirm } from "@/lib/firms/resolve";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -149,7 +148,7 @@ function Capture() {
               Saved {accepted.length} update{accepted.length === 1 ? "" : "s"}.{" "}
               <Link href="/today">See Today</Link>
               {accepted.some((p) => p.kind === "new_contact") ? (
-                <> or <Link href="/contacts/chris">open Chris</Link></>
+                <> or <Link href="/board">View board</Link></>
               ) : null}
               .
             </div>
