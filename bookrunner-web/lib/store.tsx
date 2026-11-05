@@ -25,6 +25,8 @@ type Action =
     note: string;
     accepted: ProposalKind[];
     extraction?: Extraction;
+    acceptedIds?: string[];
+    draft?: Draft;
   };
 
 function reducer(state: State, action: Action): State {
@@ -54,13 +56,15 @@ function reducer(state: State, action: Action): State {
         ),
       };
     case "apply_extraction":
-      return applyExtraction(
-        state,
-        action.firmId,
-        action.note,
-        action.accepted,
-        action.extraction
-      );
+    return applyExtraction(
+      state,
+      action.firmId,
+      action.note,
+      action.accepted,
+      action.extraction,
+      action.acceptedIds,
+      action.draft
+    );
   }
 }
 
@@ -70,7 +74,9 @@ function applyExtraction(
   firmId: string,
   note: string,
   accepted: ProposalKind[],
-  extraction?: Extraction
+  extraction?: Extraction,
+  acceptedIds?: string[],
+  draft?: Draft
 ): State {
   const has = (k: ProposalKind) => accepted.includes(k);
   const contacts = [...state.contacts];
@@ -99,7 +105,13 @@ function applyExtraction(
   }
 
   if (has("new_lead")) {
-    for (const referral of extraction.referrals) {
+    for (const [index, referral] of extraction.referrals.entries()) {
+      if (
+        acceptedIds &&
+        !acceptedIds.includes(`referral-${index}`)
+      ) {
+        continue;
+      }
       const referralId = `contact-${crypto.randomUUID()}`;
 
       contacts.push({
@@ -130,6 +142,38 @@ function applyExtraction(
       });
     }
   }
+
+  if (has("new_contact") && has("draft") && draft) {
+  drafts.push({
+    ...draft,
+    contactId: referrerId,
+  });
+
+  tasks.push({
+    id: `task-${crypto.randomUUID()}`,
+    contactId: referrerId,
+    kind: "thank_you",
+    due: TODAY,
+    label: `Thank-you to ${referrer.name}`,
+  });
+}
+
+if (
+  has("new_contact") &&
+  has("follow_up") &&
+  extraction.followUp
+) {
+  tasks.push({
+    id: `task-${crypto.randomUUID()}`,
+    contactId: referrerId,
+    kind: "follow_up",
+    due: addDays(
+      extraction.chatDate,
+      extraction.followUp.afterDays
+    ),
+    label: `Follow up with ${referrer.name}`,
+  });
+}
 
   return { ...state, contacts, tasks, drafts };
 }

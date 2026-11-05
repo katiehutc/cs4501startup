@@ -1,10 +1,15 @@
 "use client";
 
+import { resolveFirm } from "@/lib/firms/resolve";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { extractFromNotes, SAMPLE_NOTE } from "@/lib/extract";
+import {
+  extractFromNotes,
+  SAMPLE_NOTE,
+  type CaptureExtractionResult,
+} from "@/lib/extract";
 import { useStore } from "@/lib/store";
 import type { ExtractionResult, ProposalKind } from "@/lib/types";
 
@@ -33,7 +38,7 @@ function Capture() {
   const [note, setNote] = useState(params.get("note") ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<CaptureResult | null>(null);
+  const [result, setResult] = useState<CaptureExtractionResult | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [unchecked, setUnchecked] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState(false);
@@ -51,7 +56,15 @@ function Capture() {
         ? `${note}\nFirm: ${firmAnswer}`
         : note;
 
-      setResult(await extractFromNotes(submittedNote));
+      const nextResult = await extractFromNotes(submittedNote);
+
+      setResult(nextResult);
+
+      if (nextResult.errors?.length) {
+        setError(
+          nextResult.errors.map((e) => e.message).join(" ")
+        );
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
@@ -72,7 +85,29 @@ function Capture() {
 
   const save = () => {
     if (!result) return;
-    dispatch({ type: "apply_extraction", firmId: answers.firm, note, accepted: accepted.map((p) => p.kind) });
+
+    if (!result.extraction) {
+      setError("No validated extraction is available to save.");
+      return;
+    }
+
+    const firmMatch = resolveFirm(result.extraction.contact.firmText);
+
+    if (firmMatch.kind !== "match") {
+      setError("Please resolve the contact's firm before saving.");
+      return;
+    }
+
+    dispatch({
+      type: "apply_extraction",
+      firmId: firmMatch.firm.id,
+      note,
+      accepted: accepted.map((p) => p.kind),
+      acceptedIds: accepted.map((p) => p.id),
+      extraction: result.extraction,
+      draft: result.draft,
+    });
+
     setSaved(true);
   };
 
@@ -113,7 +148,7 @@ function Capture() {
               Saved {accepted.length} update{accepted.length === 1 ? "" : "s"}.{" "}
               <Link href="/today">See Today</Link>
               {accepted.some((p) => p.kind === "new_contact") ? (
-                <> or <Link href="/contacts/chris">open Chris</Link></>
+                <> or <Link href="/board">View board</Link></>
               ) : null}
               .
             </div>
