@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import type { ReactNode } from "react";
 import CapturePage from "./page";
 import { extractFromNotes } from "@/lib/extract";
+import { toCaptureResult } from "@/lib/pipeline/capture-adapter";
 
 const dispatch = vi.fn();
 
@@ -32,12 +33,38 @@ const proposals = [
   { id: "p-follow", kind: "follow_up" as const, title: "Follow up with Chris" },
 ];
 
+
 function result() {
   return {
     questions: [],
     proposals,
+    extraction: {
+      contact: {
+        name: "Chris",
+        title: "Analyst",
+        firmText: "Goldman Sachs",
+        group: "FIG",
+        city: "New York",
+      },
+      chatDate: "2026-11-04",
+      referrals: [
+        {
+          name: "Dana",
+          title: "Associate",
+          firmText: "Goldman Sachs",
+          group: "FIG",
+          city: "New York",
+        },
+      ],
+      followUp: {
+        afterDays: 21,
+        reason: "Follow up in three weeks",
+      },
+      evidence: {},
+    },
   };
 }
+
 
 async function extractNote() {
   fireEvent.change(screen.getByLabelText("What happened?"), {
@@ -73,11 +100,14 @@ describe("#49 Capture page", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: /Dana/ }));
     fireEvent.click(screen.getByRole("button", { name: "Save 2 updates" }));
 
+    
     expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: "apply_extraction",
-        accepted: ["new_contact", "follow_up"],
-      }),
+        expect.objectContaining({
+            type: "apply_extraction",
+            firmId: "gs",
+            accepted: ["new_contact", "follow_up"],
+            acceptedIds: ["p-contact", "p-follow"],
+        })
     );
   });
 
@@ -155,4 +185,70 @@ describe("#49 Capture page", () => {
     await screen.findByText("Chris · Analyst");
     expect(mockExtract).toHaveBeenCalledTimes(2);
   });
+
+
+it("[ai] saves only approved proposals from the real pipeline adapter", async () => {
+  const pipelineResult = toCaptureResult({
+    kind: "ok",
+    extraction: {
+      contact: {
+        name: "Chris",
+        title: "Analyst",
+        firmText: "Goldman Sachs",
+        group: "FIG",
+        city: "New York",
+      },
+      chatDate: "2026-11-04",
+      referrals: [
+        {
+          name: "Dana",
+          title: "Associate",
+          firmText: "Goldman Sachs",
+          group: "FIG",
+          city: "New York",
+        },
+      ],
+      followUp: {
+        afterDays: 21,
+        reason: "Follow up in three weeks",
+      },
+      evidence: {},
+    },
+    draft: {
+      contactId: "temporary",
+      greetingName: "Chris",
+      paragraphs: ["Thanks for chatting."],
+      claims: [],
+      signoff: "Best,",
+      removed: [],
+    },
+    attempts: 1,
+    trace: [],
+  });
+
+  mockExtract.mockResolvedValue(pipelineResult);
+  render(<CapturePage />);
+
+  fireEvent.change(screen.getByLabelText("What happened?"), {
+    target: { value: "Coffee chat with Chris" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Sort it out" }));
+
+  await screen.findByText("Add referral: Dana");
+
+  fireEvent.click(screen.getByRole("checkbox", { name: /Dana/ }));
+  fireEvent.click(screen.getByRole("checkbox", { name: /Draft thank-you/ }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Save 3 updates" }));
+
+  expect(dispatch).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "apply_extraction",
+      firmId: "gs",
+      accepted: ["new_contact", "log_chat", "follow_up"],
+      acceptedIds: ["contact", "chat", "follow-up"],
+    })
+  );
+});
+
 });

@@ -1,3 +1,5 @@
+import { resolveFirm } from "@/lib/firms/resolve";
+
 "use client";
 
 import Link from "next/link";
@@ -55,7 +57,15 @@ function Capture() {
         ? `${note}\nFirm: ${firmAnswer}`
         : note;
 
-      setResult(await extractFromNotes(submittedNote));
+      const nextResult = await extractFromNotes(submittedNote);
+
+      setResult(nextResult);
+
+      if (nextResult.errors?.length) {
+        setError(
+          nextResult.errors.map((e) => e.message).join(" ")
+        );
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
@@ -76,13 +86,29 @@ function Capture() {
 
   const save = () => {
     if (!result) return;
+
+    if (!result.extraction) {
+      setError("No validated extraction is available to save.");
+      return;
+    }
+
+    const firmMatch = resolveFirm(result.extraction.contact.firmText);
+
+    if (firmMatch.kind !== "match") {
+      setError("Please resolve the contact's firm before saving.");
+      return;
+    }
+
     dispatch({
       type: "apply_extraction",
-      firmId: answers.firm,
+      firmId: firmMatch.firm.id,
       note,
       accepted: accepted.map((p) => p.kind),
+      acceptedIds: accepted.map((p) => p.id),
       extraction: result.extraction,
+      draft: result.draft,
     });
+
     setSaved(true);
   };
 
