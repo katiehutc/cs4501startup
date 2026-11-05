@@ -4,10 +4,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { it } from "vitest";
 import { ClaudeClient } from "../lib/llm/client";
 import { makeDraftWriter } from "../lib/llm/draft";
+import { CLAUDE_MODEL } from "../lib/llm/model";
 import type { Contact } from "../lib/types";
 import type { ExpectedFields } from "./eval-score";
 
-const MODEL = "claude-sonnet-5-5";
 const FIXTURES = join(process.cwd(), "fixtures", "notes");
 
 interface Fixture {
@@ -23,7 +23,7 @@ function firmNameFor(expected: ExpectedFields): string | null {
 
 // Starts from the labeled fields, so a bad draft can't be blamed on a bad extraction.
 it("prints one draft per note from real Claude for reading", async () => {
-  const client = new ClaudeClient(new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }), { model: MODEL });
+  const client = new ClaudeClient(new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }), { model: CLAUDE_MODEL });
   const write = makeDraftWriter(client, (firmId) => firmId);
 
   for (const file of readdirSync(FIXTURES).filter((name) => name.endsWith(".json")).sort()) {
