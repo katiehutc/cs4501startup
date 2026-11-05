@@ -1,14 +1,15 @@
 {
   "id": "note-09",
-  "note": "talked to Jamie Kerr, chief of staff at Truist, gonzaga alum. follow up in jan right before apps, he'll connect me w/ an MD",
+  "note": "talked to Peter Lund, chief of staff at Truist, episcopal alum. follow up in jan right before apps, he'll connect me w/ an MD",
   "expected": {
-    "name": "Jamie Kerr",
+    "name": "Peter Lund",
     "title": null,
     "firm": "Truist Securities",
     "group": null,
     "city": null,
-    "followUpDays": null,
+    "followUpDays": 75,
     "referrals": []
   },
-  "tricky": "non-ladder title (chief of staff)"
+  "tricky": "non-ladder title (chief of staff); “in jan” means Mon Jan 4",
+  "followUpToleranceDays": 3
 }

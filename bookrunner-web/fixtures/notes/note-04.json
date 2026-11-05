@@ -5,14 +5,15 @@
     "name": "Alex",
     "title": null,
     "firm": "AMBIGUOUS",
-    "group": "Healthcare",
+    "group": null,
     "city": null,
-    "followUpDays": null,
+    "followUpDays": 40,
     "referrals": [],
     "firmOptions": [
       "Goldman Sachs",
       "Guggenheim Securities"
     ]
   },
-  "tricky": "ambiguous GS (Goldman vs Guggenheim Securities): expect a question, not a guess"
+  "tricky": "ambiguous GS (Goldman vs Guggenheim Securities): expect a question, not a guess. “after thanksgiving” means Mon Nov 30. Group left blank, since the note never says Alex is in healthcare",
+  "followUpToleranceDays": 3
 }

@@ -1,15 +1,15 @@
 {
   "id": "note-10",
-  "note": "Ollie Brandt, Evr analyst (gonzaga). call again in 2 days, might intro me to his MD James Holt",
+  "note": "Theo Marsh, Evr analyst (episcopal). call again in 2 days, might intro me to his MD Graham Pike",
   "expected": {
-    "name": "Ollie Brandt",
+    "name": "Theo Marsh",
     "title": "Analyst",
     "firm": "Evercore",
     "group": null,
     "city": null,
     "followUpDays": 2,
     "referrals": [
-      "James Holt"
+      "Graham Pike"
     ]
   }
 }

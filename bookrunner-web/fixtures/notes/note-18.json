@@ -1,16 +1,17 @@
 {
   "id": "note-18",
-  "note": "Connor Doyle, Gugg analyst, ZTE. same group as Nic T. put me in touch with Alex Giacone. reach out pre-app (Jan)",
+  "note": "Wes Porter, Gugg analyst, Sig Ep. same group as Rob K. put me in touch with Matt Ferraro. reach out pre-app (Jan)",
   "expected": {
-    "name": "Connor Doyle",
+    "name": "Wes Porter",
     "title": "Analyst",
     "firm": "Guggenheim Securities",
     "group": null,
     "city": null,
-    "followUpDays": null,
+    "followUpDays": 75,
     "referrals": [
-      "Alex Giacone"
+      "Matt Ferraro"
     ]
   },
-  "tricky": "nickname mention (Nic T) should not become a contact"
+  "tricky": "nickname mention (Rob K) should not become a contact; “pre-app (Jan)” means Mon Jan 4",
+  "followUpToleranceDays": 3
 }
