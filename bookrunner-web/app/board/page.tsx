@@ -72,7 +72,7 @@ export default function BoardPage() {
                 </h2>
                 {people.map((c) => (
                   <Link key={c.id} href={`/contacts/${c.id}`} className="person-card">
-                    <span className="person-firm">{firmOf(c.firmId)?.name}</span>
+                    <span className="person-firm"> {firmOf(c.firmId)?.name ?? "Firm unknown"}</span>
                     <span className="person-name">{c.name} · {c.title}</span>
                     {c.status ? <span className={`person-status${c.urgent ? " urgent" : ""}`}>{c.status}</span> : null}
                   </Link>

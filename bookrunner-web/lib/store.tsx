@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useReducer, type ReactNode } from "react";
-import { addDays, TODAY } from "./dates";
+import React, { createContext, useContext, useReducer, type ReactNode } from "react";import { addDays, TODAY } from "./dates";
+import type { Extraction } from "./contracts";
 import { CONTACTS, DRAFTS, FIRMS, TASKS } from "./mock-data";
 import type { Contact, Draft, Firm, ProposalKind, Stage, Task } from "./types";
+import { resolveFirm } from "./firms/resolve";
 
 interface State {
   firms: Firm[];
@@ -19,7 +20,15 @@ type Action =
   | { type: "set_stage"; contactId: string; stage: Stage }
   | { type: "set_sender"; name: string }
   | { type: "mark_sent"; contactId: string }
-  | { type: "apply_extraction"; firmId: string; note: string; accepted: ProposalKind[] };
+  | {
+    type: "apply_extraction";
+    firmId: string;
+    note: string;
+    accepted: ProposalKind[];
+    extraction?: Extraction;
+    acceptedIds?: string[];
+    draft?: Draft;
+  };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -48,16 +57,130 @@ function reducer(state: State, action: Action): State {
         ),
       };
     case "apply_extraction":
-      return applyExtraction(state, action.firmId, action.note, action.accepted);
+    return applyExtraction(
+      state,
+      action.firmId,
+      action.note,
+      action.accepted,
+      action.extraction,
+      action.acceptedIds,
+      action.draft
+    );
   }
 }
 
 // Turns the accepted proposals from the sample note into records.
-function applyExtraction(state: State, firmId: string, note: string, accepted: ProposalKind[]): State {
+function applyExtraction(
+  state: State,
+  firmId: string,
+  note: string,
+  accepted: ProposalKind[],
+  extraction?: Extraction,
+  acceptedIds?: string[],
+  draft?: Draft
+): State {
   const has = (k: ProposalKind) => accepted.includes(k);
   const contacts = [...state.contacts];
   const tasks = [...state.tasks];
   const drafts = [...state.drafts];
+
+  if (extraction) {
+  const referrer = extraction.contact;
+  const referrerId = `contact-${crypto.randomUUID()}`;
+
+  if (has("new_contact")) {
+    contacts.push({
+      id: referrerId,
+      name: referrer.name,
+      title: referrer.title ?? "",
+      firmId,
+      group: referrer.group ?? "",
+      city: referrer.city ?? "",
+      stage: "chatted",
+      notes: note,
+      timeline: has("log_chat")
+        ? [{ date: extraction.chatDate, text: "Coffee chat. Notes saved." }]
+        : [],
+      status: "Chatted",
+    });
+  }
+
+  if (has("new_lead")) {
+    for (const [index, referral] of extraction.referrals.entries()) {
+      if (
+        acceptedIds &&
+        !acceptedIds.includes(`referral-${index}`)
+      ) {
+        continue;
+      }
+      const referralId = `contact-${crypto.randomUUID()}`;
+
+      const referralFirm = referral.firmText?.trim();
+      const matchedFirm = referralFirm ? resolveFirm(referralFirm) : null;
+
+      contacts.push({
+        id: referralId,
+        name: referral.name,
+        title: referral.title ?? "",
+        firmId: matchedFirm?.kind === "match" ? matchedFirm.firm.id : "",
+        group: referral.group ?? "",
+        city: referral.city ?? "",
+        stage: "to_reach",
+        referredBy: has("new_contact") ? referrerId : undefined,
+        notes: "",
+        timeline: [
+          {
+            date: TODAY,
+            text: `${referrer.name} suggested reaching out`,
+          },
+        ],
+        status: `Referred by ${referrer.name}`,
+      });
+
+      tasks.push({
+        id: `task-${crypto.randomUUID()}`,
+        contactId: referralId,
+        kind: "reach_out",
+        due: addDays(TODAY, 1),
+        label: `Reach out to ${referral.name}`,
+      });
+    }
+  }
+
+  if (has("new_contact") && has("draft") && draft) {
+  drafts.push({
+    ...draft,
+    contactId: referrerId,
+  });
+
+  tasks.push({
+    id: `task-${crypto.randomUUID()}`,
+    contactId: referrerId,
+    kind: "thank_you",
+    due: TODAY,
+    label: `Thank-you to ${referrer.name}`,
+  });
+}
+
+if (
+  has("new_contact") &&
+  has("follow_up") &&
+  extraction.followUp
+) {
+  tasks.push({
+    id: `task-${crypto.randomUUID()}`,
+    contactId: referrerId,
+    kind: "follow_up",
+    due: addDays(
+      extraction.chatDate,
+      extraction.followUp.afterDays
+    ),
+    label: `Follow up with ${referrer.name}`,
+  });
+}
+
+  return { ...state, contacts, tasks, drafts };
+}
 
   if (has("new_contact")) {
     contacts.push({

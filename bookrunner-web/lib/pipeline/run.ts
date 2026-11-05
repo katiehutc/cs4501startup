@@ -2,6 +2,7 @@ import { MAX_ATTEMPTS } from "../contracts";
 import type {
   DraftValidator,
   DraftWriter,
+  ExtractedContact,
   Extraction,
   ExtractionValidator,
   Extractor,
@@ -13,6 +14,7 @@ import type { Contact, Firm } from "../types";
 
 // The real id is assigned when the student saves the contact.
 const UNSAVED_CONTACT_ID = "unsaved";
+const FIRM_ANSWER = /\nFirm: (.+)$/;
 
 export interface PipelineDeps {
   extract: Extractor;
@@ -50,6 +52,8 @@ function checkExtraction(extraction: Extraction, note: string, today: string, de
 
 function findFirmQuestion(extraction: Extraction, resolveFirm: FirmResolver): FirmQuestion | null {
   for (const person of [extraction.contact, ...extraction.referrals]) {
+    if (!person.firmText?.trim()) continue;
+
     const match = resolveFirm(person.firmText);
     if (match.kind === "ambiguous") {
       return {
@@ -59,6 +63,33 @@ function findFirmQuestion(extraction: Extraction, resolveFirm: FirmResolver): Fi
     }
   }
   return null;
+}
+
+// In code, not the prompt: the model sometimes repeats the shorthand, which would ask the student the same question again.
+function applyFirmAnswer(extraction: Extraction, note: string, resolveFirm: FirmResolver): Extraction {
+  const answer = note.match(FIRM_ANSWER)?.[1]?.trim();
+  if (!answer || !extraction?.contact || !Array.isArray(extraction.referrals)) {
+    return extraction;
+  }
+  const answered = resolveFirm(answer);
+  if (answered.kind !== "match") {
+    return extraction;
+  }
+  const evidence = { ...extraction.evidence };
+  const settle = (person: ExtractedContact, field: string): ExtractedContact => {
+    const match = typeof person?.firmText === "string" ? resolveFirm(person.firmText) : null;
+    if (match?.kind !== "ambiguous" || !match.options.some((firm) => firm.id === answered.firm.id)) {
+      return person;
+    }
+    evidence[`${field}.firmText`] = answer;
+    return { ...person, firmText: answer };
+  };
+  return {
+    ...extraction,
+    contact: settle(extraction.contact, "contact"),
+    referrals: extraction.referrals.map((person, index) => settle(person, `referrals[${index}]`)),
+    evidence,
+  };
 }
 
 function toContact(extraction: Extraction, firm: Firm, note: string): Contact {
@@ -88,7 +119,7 @@ export async function runPipeline(note: string, today: string, deps: PipelineDep
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     if (validated === null) {
-      const extraction = await deps.extract(note, today, previousErrors);
+      const extraction = applyFirmAnswer(await deps.extract(note, today, previousErrors), note, deps.resolveFirm);
       const check = checkExtraction(extraction, note, today, deps);
       if ("errors" in check) {
         trace.push(check.errors);

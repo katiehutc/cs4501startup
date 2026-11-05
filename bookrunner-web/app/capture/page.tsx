@@ -1,10 +1,15 @@
 "use client";
 
+import { resolveFirm } from "@/lib/firms/resolve";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { extractFromNotes, SAMPLE_NOTE } from "@/lib/extract";
+import {
+  extractFromNotes,
+  SAMPLE_NOTE,
+  type CaptureExtractionResult,
+} from "@/lib/extract";
 import { useStore } from "@/lib/store";
 import type { ExtractionResult, ProposalKind } from "@/lib/types";
 
@@ -16,26 +21,53 @@ const KIND_LABEL: Record<ProposalKind, string> = {
   draft: "THANK-YOU DRAFT",
 };
 
+type ValidationIssue = {
+  code: string;
+  field: string;
+  message: string;
+};
+
+type CaptureResult = ExtractionResult & {
+  attempts?: number;
+  trace?: ValidationIssue[][];
+};
+
 function Capture() {
   const params = useSearchParams();
   const { dispatch } = useStore();
   const [note, setNote] = useState(params.get("note") ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<ExtractionResult | null>(null);
+  const [result, setResult] = useState<CaptureExtractionResult | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [unchecked, setUnchecked] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState(false);
+  // What the pipeline validated against, so the contact page's checks use the same text.
+  const [submittedNote, setSubmittedNote] = useState("");
 
-  const run = async () => {
+  const run = async (firmAnswer?: string, firmId?: string) => {
     setLoading(true);
     setError(null);
     setResult(null);
     setSaved(false);
-    setAnswers({});
+    setAnswers(firmId ? { firm: firmId } : {});
     setUnchecked(new Set());
+
     try {
-      setResult(await extractFromNotes(note));
+      const noteToSubmit = firmAnswer
+        ? `${note}\nFirm: ${firmAnswer}`
+        : note;
+
+      const nextResult = await extractFromNotes(noteToSubmit);
+
+      setSubmittedNote(noteToSubmit);
+      setResult(nextResult);
+
+      if (nextResult.errors?.length) {
+        setError(
+          nextResult.errors.map((e) => e.message).join(" ")
+        );
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
@@ -56,7 +88,29 @@ function Capture() {
 
   const save = () => {
     if (!result) return;
-    dispatch({ type: "apply_extraction", firmId: answers.firm, note, accepted: accepted.map((p) => p.kind) });
+
+    if (!result.extraction) {
+      setError("No validated extraction is available to save.");
+      return;
+    }
+
+    const firmMatch = resolveFirm(result.extraction.contact.firmText);
+
+    if (firmMatch.kind !== "match") {
+      setError("Please resolve the contact's firm before saving.");
+      return;
+    }
+
+    dispatch({
+      type: "apply_extraction",
+      firmId: firmMatch.firm.id,
+      note: submittedNote,
+      accepted: accepted.map((p) => p.kind),
+      acceptedIds: accepted.map((p) => p.id),
+      extraction: result.extraction,
+      draft: result.draft,
+    });
+
     setSaved(true);
   };
 
@@ -78,8 +132,8 @@ function Capture() {
           />
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "space-between", alignItems: "center" }}>
             <button className="btn btn-ghost btn-sm" onClick={() => setNote(SAMPLE_NOTE)}>Use the sample note</button>
-            <button className="btn btn-primary" disabled={!note.trim() || loading} onClick={run}>
-              {loading ? "Reading your notes…" : "Sort it out"}
+            <button className="btn btn-primary" disabled={!note.trim() || loading} onClick={() => void run()}>
+              {loading ? "Reading your notes…" : error ? "Try again" : "Sort it out"}
             </button>
           </div>
           <p className="small muted" style={{ margin: 0 }}>Nothing is saved until you approve it.</p>
@@ -97,7 +151,7 @@ function Capture() {
               Saved {accepted.length} update{accepted.length === 1 ? "" : "s"}.{" "}
               <Link href="/today">See Today</Link>
               {accepted.some((p) => p.kind === "new_contact") ? (
-                <> or <Link href="/contacts/chris">open Chris</Link></>
+                <> or <Link href="/board">View board</Link></>
               ) : null}
               .
             </div>
@@ -114,7 +168,9 @@ function Capture() {
                         key={o.value}
                         className={`chip${answers[q.id] === o.value ? " on" : ""}`}
                         aria-pressed={answers[q.id] === o.value}
-                        onClick={() => setAnswers((a) => ({ ...a, [q.id]: o.value }))}
+                        onClick={() => {
+                          void run(o.label, o.value);
+                        }}
                       >
                         {o.label}
                       </button>
@@ -122,6 +178,17 @@ function Capture() {
                   </div>
                 </div>
               ))}
+
+              {result.attempts !== undefined && (
+                <div className="small muted">
+                  <p>Checked in {result.attempts} attempts</p>
+                  {result.trace?.flat().map((issue, index) => (
+                    <p key={`${issue.field}-${index}`}>
+                      Fixed: {issue.message}
+                    </p>
+                  ))}
+                </div>
+              )}
 
               <ul className="proposals">
                 {result.proposals.map((p) => (
