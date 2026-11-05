@@ -98,7 +98,7 @@ describe("#45 makeDraftWriter prompt", () => {
     expect((await promptFor()).all).toContain("Chris Lee");
   });
 
-  it("[ai] gives the model the firm's name and keeps its internal id out of the prompt", async () => {
+  it("[manual] gives the model the firm's name and keeps its internal id out of the prompt", async () => {
     const contact = { ...CONTACT, firmId: "firm-123" };
     const lookUp = (id: string): string => (id === "firm-123" ? "Goldman Sachs" : "wrong firm");
     const client = new FakeLlmClient([RESPONSE]);
@@ -109,7 +109,7 @@ describe("#45 makeDraftWriter prompt", () => {
 
     expect(prompt).toContain("Goldman Sachs");
     expect(prompt).not.toContain("wrong firm");
-    expect(prompt).not.toContain("firm-123");
+    expect(prompt.toLowerCase()).not.toContain("firm-123");
   });
 
   it("[ai] asks for the contact's first name as the greeting name", async () => {
