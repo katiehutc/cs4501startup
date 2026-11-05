@@ -1,14 +1,15 @@
 {
   "id": "note-14",
-  "note": "Maureen Fahey, analyst at Cannacord (CGF), connected thru Maurice Webb (MD there). follow up monday",
+  "note": "Rachel Ortiz, analyst at Cannacord (CGF), connected thru Daniel Quinn (MD there). follow up monday",
   "expected": {
-    "name": "Maureen Fahey",
+    "name": "Rachel Ortiz",
     "title": "Analyst",
     "firm": "Canaccord Genuity",
     "group": null,
     "city": null,
-    "followUpDays": null,
+    "followUpDays": 5,
     "referrals": []
   },
-  "tricky": "misspelled firm (Cannacord) and a relative date"
+  "tricky": "misspelled firm (Cannacord); “monday” means the next Monday, Oct 26",
+  "followUpToleranceDays": 3
 }
