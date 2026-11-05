@@ -144,4 +144,27 @@ describe("#40 resolveFirm", () => {
       "MD",
     ]);
   });
+  it("[ai] recognizes newly supported firms and aliases", () => {
+    const cases = [
+      ["PWP", "pwp"],
+      ["Perella Weinberg", "pwp"],
+      ["Truist", "truist"],
+      ["Truist Securities", "truist"],
+      ["Canaccord", "cgf"],
+      ["Cannacord", "cgf"],
+      ["CGF", "cgf"],
+      ["Gugg", "gugg"],
+      ["Jeff", "jeff"],
+    ];
+
+    for (const [input, expectedId] of cases) {
+      const result = resolveFirm(input);
+
+      expect(result.kind).toBe("match");
+
+      if (result.kind === "match") {
+        expect(result.firm.id).toBe(expectedId);
+      }
+    }
+  });
 });
