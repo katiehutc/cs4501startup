@@ -161,6 +161,44 @@ describe("#49 Capture page", () => {
     expect(mockExtract.mock.calls[1][0]).toContain("Goldman Sachs");
   });
 
+  it("[ai] saves the student's firm answer with the note, so the draft's evidence check passes later", async () => {
+    mockExtract
+      .mockResolvedValueOnce({
+        questions: [{
+          id: "firm",
+          prompt: 'Is "GS" Goldman Sachs or Guggenheim Securities?',
+          options: [
+            { label: "Goldman Sachs", value: "Goldman Sachs" },
+            { label: "Guggenheim", value: "Guggenheim Securities" },
+          ],
+        }],
+        proposals: [],
+      })
+      .mockResolvedValueOnce(result());
+
+    render(<CapturePage />);
+
+    fireEvent.change(screen.getByLabelText("What happened?"), {
+      target: { value: "Coffee chat with Chris at GS" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sort it out" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Goldman Sachs" }));
+    await screen.findByText("Chris · Analyst");
+    fireEvent.click(screen.getByRole("button", { name: "Save 3 updates" }));
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ note: "Coffee chat with Chris at GS\nFirm: Goldman Sachs" }),
+    );
+  });
+
+  it("[ai] saves the note as typed when no firm question was asked", async () => {
+    mockExtract.mockResolvedValue(result());
+    render(<CapturePage />);
+    await extractNote();
+    fireEvent.click(screen.getByRole("button", { name: "Save 3 updates" }));
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ note: "Coffee chat with Chris" }));
+  });
+
   it("[ai] preserves notes and offers Try again after failure", async () => {
     mockExtract.mockRejectedValueOnce(new Error("Extraction failed"))
       .mockResolvedValueOnce(result());
