@@ -56,7 +56,19 @@ function firmIsCorrect(expected: ExpectedFields, firmText: string, resolve: Firm
   return match.kind === "match" && sameText(expected.firm, match.firm.name);
 }
 
-export function scoreExtraction(expected: ExpectedFields, extraction: Extraction, resolve: FirmResolver): FieldScore {
+function followUpIsCorrect(expected: number | null, actual: number | null, toleranceDays: number): boolean {
+  if (expected === null || actual === null) {
+    return expected === actual;
+  }
+  return Math.abs(expected - actual) <= toleranceDays;
+}
+
+export function scoreExtraction(
+  expected: ExpectedFields,
+  extraction: Extraction,
+  resolve: FirmResolver,
+  followUpToleranceDays = 0,
+): FieldScore {
   const { contact, followUp, referrals } = extraction;
   const checks: [string, boolean][] = [
     ["name", sameText(expected.name, contact.name)],
@@ -64,7 +76,7 @@ export function scoreExtraction(expected: ExpectedFields, extraction: Extraction
     ["firm", firmIsCorrect(expected, contact.firmText, resolve)],
     ["group", sameText(expected.group, contact.group)],
     ["city", sameText(expected.city, contact.city)],
-    ["followUpDays", expected.followUpDays === (followUp?.afterDays ?? null)],
+    ["followUpDays", followUpIsCorrect(expected.followUpDays, followUp?.afterDays ?? null, followUpToleranceDays)],
     ["referrals", sameNames(expected.referrals, referrals.map((person) => person.name))],
   ];
   const misses = checks.filter(([, ok]) => !ok).map(([field]) => field);

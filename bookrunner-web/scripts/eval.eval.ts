@@ -20,6 +20,7 @@ interface Fixture {
   id: string;
   note: string;
   expected: ExpectedFields;
+  followUpToleranceDays?: number;
 }
 
 function loadFixtures(): Fixture[] {
@@ -44,7 +45,7 @@ it("runs the full pipeline on every labeled note with real Claude", async () => 
   const outcomes: NoteOutcome[] = [];
   let apiFailures = 0;
 
-  for (const { id, note, expected } of loadFixtures()) {
+  for (const { id, note, expected, followUpToleranceDays } of loadFixtures()) {
     let last: Extraction | null = null;
     const extract: typeof deps.extract = async (...args) => {
       last = await deps.extract(...args);
@@ -57,7 +58,7 @@ it("runs the full pipeline on every labeled note with real Claude", async () => 
       apiFailures += 1;
       console.log(`\n${id}: API FAILED: ${error instanceof Error ? error.message : String(error)}`);
     }
-    const score = last === null ? null : scoreExtraction(expected, last, resolveFirm);
+    const score = last === null ? null : scoreExtraction(expected, last, resolveFirm, followUpToleranceDays);
     outcomes.push({ kind: result?.kind ?? "failed", attempts: result?.attempts ?? 0, score });
     console.log(`\n${id}: ${result?.kind ?? "api failure"}, attempts ${result?.attempts ?? 0}, misses: ${score?.misses.join(", ") || "none"}`);
     if (result?.kind === "failed") {
