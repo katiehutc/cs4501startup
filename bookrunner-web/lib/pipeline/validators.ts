@@ -123,6 +123,37 @@ export const validateExtraction: ExtractionValidator = (
     errors.push(error("date_past", "chatDate", "Chat date is in the future"));
   }
 
+  if (extraction.followUp !== null) {
+    const followUp = extraction.followUp;
+
+    if (
+        !followUp ||
+        typeof followUp.afterDays !== "number" ||
+        !Number.isInteger(followUp.afterDays) ||
+        followUp.afterDays < 0 ||
+        typeof followUp.reason !== "string"
+    ) {
+        errors.push(
+        error("schema", "followUp", "Invalid follow-up structure")
+        );
+    } else {
+        const quote = extraction.evidence["followUp"];
+
+        if (
+        !quote ||
+        !note.toLowerCase().includes(quote.toLowerCase())
+        ) {
+        errors.push(
+            error(
+            "ungrounded",
+            "followUp",
+            "Follow-up has no supporting evidence in the note"
+            )
+        );
+        }
+    }
+    }
+
   return errors;
 };
 
@@ -156,6 +187,30 @@ export const validateDraft: DraftValidator = (
   }
 
   const body = draft.paragraphs.join("\n");
+
+  // Conservative check for unsupported specific deal references.
+    // This is an additional guardrail, not a complete factuality check.
+    const dealTerms = /\b(IPO|merger|acquisition|transaction|deal)\b/gi;
+
+    const noteTerms = new Set(
+    (note.match(dealTerms) ?? []).map((term) => term.toLowerCase())
+    );
+
+    const draftTerms = new Set(
+    (body.match(dealTerms) ?? []).map((term) => term.toLowerCase())
+    );
+
+    for (const term of draftTerms) {
+    if (!noteTerms.has(term)) {
+        errors.push(
+        error(
+            "ungrounded",
+            "paragraphs",
+            `Draft mentions "${term}" without support in the note`
+        )
+        );
+    }
+}
 
   if (/\[[^\]]+\]/.test(body)) {
     errors.push(
