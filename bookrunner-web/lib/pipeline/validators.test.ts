@@ -116,4 +116,55 @@ describe("#integration extraction and draft validation", () => {
       expect.objectContaining({ code: "recipient_mismatch" })
     );
   });
+
+it("[ai] rejects malformed referral data without crashing", () => {
+  const invalid = {
+    ...extraction,
+    referrals: [{ name: 42, title: null, firmText: "Goldman Sachs" }],
+  } as unknown as Extraction;
+
+  expect(() =>
+    validateExtraction(invalid, NOTE, "2026-11-04")
+  ).not.toThrow();
+
+  expect(
+    validateExtraction(invalid, NOTE, "2026-11-04")
+  ).toContainEqual(
+    expect.objectContaining({ code: "schema" })
+  );
+});
+
+it("[ai] rejects follow-ups without supporting evidence", () => {
+  const invalid: Extraction = {
+    ...extraction,
+    followUp: {
+      afterDays: 14,
+      reason: "Follow up about an offer",
+    },
+  };
+
+  expect(
+    validateExtraction(invalid, NOTE, "2026-11-04")
+  ).toContainEqual(
+    expect.objectContaining({ code: "ungrounded", field: "followUp" })
+  );
+});
+
+it("[ai] rejects invented draft details even without a listed claim", () => {
+  const draft: Draft = {
+    contactId: "alex",
+    greetingName: "Alex",
+    paragraphs: [
+      "Thanks for chatting about your recent IPO at Goldman Sachs.",
+    ],
+    claims: [],
+    signoff: "Best,",
+    removed: [],
+  };
+
+  expect(validateDraft(draft, NOTE, contact)).toContainEqual(
+    expect.objectContaining({ code: "ungrounded" })
+  );
+});
+
 });
