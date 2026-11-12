@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import type { LlmClient } from "@/lib/contracts";
 import { TODAY } from "@/lib/dates";
 import { ClaudeClient, LlmError } from "@/lib/llm/client";
-import { CLAUDE_MODEL } from "@/lib/llm/model";
+import { MAX_NOTE_CHARS } from "@/lib/limits";
+import { CLAUDE_MODEL, LLM_MAX_RETRIES, LLM_TIMEOUT_MS } from "@/lib/llm/model";
 import { runPipeline } from "@/lib/pipeline/run";
 import { makePipelineDeps } from "@/lib/pipeline/server";
 import { makeFakeLlm } from "./fake-llm";
@@ -27,7 +28,7 @@ function makeClient(note: string): LlmClient {
       },
     };
   }
-  return new ClaudeClient(new Anthropic({ apiKey }), { model: CLAUDE_MODEL });
+  return new ClaudeClient(new Anthropic({ apiKey, timeout: LLM_TIMEOUT_MS, maxRetries: LLM_MAX_RETRIES }), { model: CLAUDE_MODEL });
 }
 
 async function readNote(request: Request): Promise<string | null> {
@@ -44,6 +45,12 @@ export async function POST(request: Request): Promise<Response> {
   const note = await readNote(request);
   if (note === null) {
     return NextResponse.json({ error: "Please provide some notes." }, { status: 400 });
+  }
+  if (note.length > MAX_NOTE_CHARS) {
+    return NextResponse.json(
+      { error: `Those notes are too long. Keep them under ${MAX_NOTE_CHARS.toLocaleString("en-US")} characters.` },
+      { status: 400 },
+    );
   }
 
   try {

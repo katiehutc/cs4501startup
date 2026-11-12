@@ -169,3 +169,13 @@ describe("#43 ClaudeClient", () => {
     await expect(client.completeJson("s", "u", SCHEMA)).rejects.toBeInstanceOf(LlmError);
   });
 });
+
+describe("ClaudeClient timeouts", () => {
+  it("[ai] turns an SDK timeout into an LlmError so the route answers with a 502", async () => {
+    const timeout = Object.assign(new Error("Request timed out."), { name: "APIConnectionTimeoutError" });
+    const client = new ClaudeClient(fakeSdk(async () => { throw timeout; }).sdk, { model: "test-model" });
+    const error = await captureError(() => client.completeJson("s", "u", SCHEMA));
+    expect(error).toBeInstanceOf(LlmError);
+    expect((error as LlmError).cause).toBe(timeout);
+  });
+});

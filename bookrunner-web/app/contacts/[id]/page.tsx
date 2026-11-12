@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { AppShell } from "@/components/AppShell";
 import { formatShort } from "@/lib/dates";
+import { contactLine } from "@/lib/display";
 import { STAGES } from "@/lib/stages";
 import { useFirm, useStore } from "@/lib/store";
 import type { Claim, Stage } from "@/lib/types";
@@ -90,7 +91,7 @@ export default function ContactPage() {
           <section className="card" aria-label="Contact">
             <h1 className="page-title">{contact.name}</h1>
             <p className="muted" style={{ margin: "6px 0 12px" }}>
-              {contact.title} · {firm?.name} · {contact.group} · {contact.city}
+              {contactLine([contact.title, firm, contact.group, contact.city])}
             </p>
             <div className="chips" style={{ marginBottom: 14 }}>
               {referrer ? <Link href={`/contacts/${referrer.id}`} className="tag">Referred by {referrer.name}</Link> : null}
