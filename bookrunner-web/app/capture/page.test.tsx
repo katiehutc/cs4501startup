@@ -290,3 +290,15 @@ it("[ai] saves only approved proposals from the real pipeline adapter", async ()
 });
 
 });
+
+describe("Capture note length", () => {
+  afterEach(() => cleanup());
+
+  it("[ai] stops typing past the limit, leaving room for the firm answer the page appends", async () => {
+    const { MAX_NOTE_CHARS, NOTE_INPUT_MAX_CHARS } = await import("@/lib/limits");
+    render(<CapturePage />);
+    const box = screen.getByLabelText("What happened?");
+    expect(box).toHaveProperty("maxLength", NOTE_INPUT_MAX_CHARS);
+    expect(NOTE_INPUT_MAX_CHARS).toBeLessThan(MAX_NOTE_CHARS);
+  });
+});

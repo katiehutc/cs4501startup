@@ -10,6 +10,7 @@ import {
   SAMPLE_NOTE,
   type CaptureExtractionResult,
 } from "@/lib/extract";
+import { NOTE_INPUT_MAX_CHARS } from "@/lib/limits";
 import { useStore } from "@/lib/store";
 import type { ExtractionResult, ProposalKind } from "@/lib/types";
 
@@ -128,6 +129,7 @@ function Capture() {
             className="note-input"
             placeholder="Paste call notes, an email thread or a LinkedIn profile"
             value={note}
+            maxLength={NOTE_INPUT_MAX_CHARS}
             onChange={(e) => setNote(e.target.value)}
           />
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "space-between", alignItems: "center" }}>

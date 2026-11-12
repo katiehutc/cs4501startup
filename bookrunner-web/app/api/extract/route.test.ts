@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PipelineResult } from "../../../lib/contracts";
 import { TODAY } from "../../../lib/dates";
+import { MAX_NOTE_CHARS } from "../../../lib/limits";
 import { LlmError } from "../../../lib/llm/client";
 
 const mocks = vi.hoisted(() => ({
@@ -108,5 +109,26 @@ describe("#48 POST /api/extract", () => {
     );
     expect(response.status).toBe(400);
     expect(mocks.runPipeline).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/extract note length cap", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.makeDeps.mockReturnValue({});
+  });
+
+  it("[ai] rejects a note over the limit without calling the LLM", async () => {
+    const response = await POST(request({ note: "a".repeat(MAX_NOTE_CHARS + 1) }));
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toMatch(/too long/i);
+    expect(mocks.runPipeline).not.toHaveBeenCalled();
+  });
+
+  it("[ai] accepts a note exactly at the limit", async () => {
+    mocks.runPipeline.mockResolvedValue({ kind: "failed", errors: [], attempts: 1, trace: [] });
+    const response = await POST(request({ note: "a".repeat(MAX_NOTE_CHARS) }));
+    expect(response.status).toBe(200);
+    expect(mocks.runPipeline).toHaveBeenCalledOnce();
   });
 });
