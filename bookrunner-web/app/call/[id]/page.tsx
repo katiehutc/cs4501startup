@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { contactLine } from "@/lib/display";
 import { useFirm, useStore } from "@/lib/store";
 
 const QUESTIONS = [
@@ -66,7 +67,7 @@ export default function CallPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 28 }}>{contact.name}</h1>
-            <p className="muted" style={{ margin: "6px 0 0" }}>{contact.title} · {firm?.name} · {contact.group}</p>
+            <p className="muted" style={{ margin: "6px 0 0" }}>{contactLine([contact.title, firm, contact.group])}</p>
           </div>
           <section className="call-panel" aria-label="Brief">
             <h2 className="section-label">Brief</h2>

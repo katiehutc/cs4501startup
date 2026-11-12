@@ -69,6 +69,13 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+// One record per person at a firm, so saving the same notes twice doesn't create duplicates.
+function findContact(contacts: Contact[], name: string, firmId: string): Contact | undefined {
+  return contacts.find((c) => c.firmId === firmId && sameName(c.name, name));
+}
+
 // Turns the accepted proposals from the sample note into records.
 function applyExtraction(
   state: State,
@@ -86,9 +93,20 @@ function applyExtraction(
 
   if (extraction) {
   const referrer = extraction.contact;
-  const referrerId = `contact-${crypto.randomUUID()}`;
+  const existingReferrer = findContact(contacts, referrer.name, firmId);
+  const referrerId = existingReferrer?.id ?? `contact-${crypto.randomUUID()}`;
 
-  if (has("new_contact")) {
+  if (has("new_contact") && existingReferrer) {
+    // Same person at the same firm: log this chat on their record instead of adding a duplicate.
+    const index = contacts.indexOf(existingReferrer);
+    contacts[index] = {
+      ...existingReferrer,
+      notes: existingReferrer.notes ? `${existingReferrer.notes}\n\n${note}` : note,
+      timeline: has("log_chat")
+        ? [{ date: extraction.chatDate, text: "Coffee chat. Notes saved." }, ...existingReferrer.timeline]
+        : existingReferrer.timeline,
+    };
+  } else if (has("new_contact")) {
     contacts.push({
       id: referrerId,
       name: referrer.name,
@@ -113,16 +131,19 @@ function applyExtraction(
       ) {
         continue;
       }
-      const referralId = `contact-${crypto.randomUUID()}`;
-
       const referralFirm = referral.firmText?.trim();
       const matchedFirm = referralFirm ? resolveFirm(referralFirm) : null;
+      const referralFirmId = matchedFirm?.kind === "match" ? matchedFirm.firm.id : "";
+      if (findContact(contacts, referral.name, referralFirmId)) {
+        continue;
+      }
+      const referralId = `contact-${crypto.randomUUID()}`;
 
       contacts.push({
         id: referralId,
         name: referral.name,
         title: referral.title ?? "",
-        firmId: matchedFirm?.kind === "match" ? matchedFirm.firm.id : "",
+        firmId: referralFirmId,
         group: referral.group ?? "",
         city: referral.city ?? "",
         stage: "to_reach",
@@ -148,12 +169,15 @@ function applyExtraction(
   }
 
   if (has("new_contact") && has("draft") && draft) {
+  // The newest draft replaces an older one, and an open thank-you task isn't stacked.
+  const oldDraft = drafts.findIndex((d) => d.contactId === referrerId);
+  if (oldDraft !== -1) drafts.splice(oldDraft, 1);
   drafts.push({
     ...draft,
     contactId: referrerId,
   });
 
-  tasks.push({
+  if (!tasks.some((t) => t.contactId === referrerId && t.kind === "thank_you")) tasks.push({
     id: `task-${crypto.randomUUID()}`,
     contactId: referrerId,
     kind: "thank_you",
@@ -167,6 +191,8 @@ if (
   has("follow_up") &&
   extraction.followUp
 ) {
+  const oldFollowUp = tasks.findIndex((t) => t.contactId === referrerId && t.kind === "follow_up");
+  if (oldFollowUp !== -1) tasks.splice(oldFollowUp, 1);
   tasks.push({
     id: `task-${crypto.randomUUID()}`,
     contactId: referrerId,

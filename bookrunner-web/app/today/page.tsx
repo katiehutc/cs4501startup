@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { addDays, daysBetween, formatLong, formatShort, TODAY } from "@/lib/dates";
+import { banksCovered, contactLine } from "@/lib/display";
 import { useStore } from "@/lib/store";
 import type { Task } from "@/lib/types";
 
@@ -23,7 +24,7 @@ export default function TodayPage() {
   const firmName = (contactId: string) => {
     const c = state.contacts.find((x) => x.id === contactId);
     const f = state.firms.find((x) => x.id === c?.firmId);
-    return c ? `${f?.name ?? ""} · ${c.group} · ${c.title}` : "";
+    return c ? contactLine([f, c.group, c.title]) : "";
   };
 
   const sorted = [...state.tasks].sort((a, b) => a.due.localeCompare(b.due));
@@ -40,7 +41,7 @@ export default function TodayPage() {
 
   const stats = [
     { label: "Contacts", value: state.contacts.length },
-    { label: "Banks covered", value: new Set(state.contacts.map((c) => c.firmId)).size },
+    { label: "Banks covered", value: banksCovered(state.contacts) },
     { label: "Waiting on a reply", value: state.contacts.filter((c) => c.stage === "emailed").length },
     { label: "Referrals", value: state.contacts.filter((c) => c.stage === "referral").length },
   ];

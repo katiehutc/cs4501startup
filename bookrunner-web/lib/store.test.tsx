@@ -364,3 +364,91 @@ describe("#50 mark sent", () => {
     );
   });
 });
+
+describe("saving the same chat twice", () => {
+  afterEach(() => cleanup());
+
+  const thankYouDraft: Draft = {
+    contactId: "alex",
+    greetingName: "Alex",
+    paragraphs: ["Thanks for chatting!"],
+    claims: [],
+    signoff: "Best,",
+    removed: [],
+  };
+
+  function saveTwice(accepted: ProposalKind[], data: Extraction = extraction) {
+    render(
+      <StoreProvider>
+        <ApprovalTestStore accepted={accepted} data={data} draft={thankYouDraft} />
+      </StoreProvider>,
+    );
+    const button = screen.getByText("Apply approved updates");
+    fireEvent.click(button);
+    fireEvent.click(button);
+    return JSON.parse(screen.getByTestId("store-state").textContent ?? "{}") as {
+      contacts: { id: string; name: string; firmId: string; notes: string; timeline: unknown[] }[];
+      tasks: { contactId: string; kind: string }[];
+      drafts: { contactId: string }[];
+    };
+  }
+
+  it("keeps one contact per person at a firm and logs the second chat on it", () => {
+    const state = saveTwice(["new_contact", "log_chat"]);
+    const alexes = state.contacts.filter((c) => c.name === "Alex" && c.firmId === "gs");
+    expect(alexes).toHaveLength(1);
+    expect(alexes[0].timeline).toHaveLength(2);
+  });
+
+  function TwoSaves({ first, second }: { first: { firmId: string; name: string }; second: { firmId: string; name: string } }) {
+    const { state, dispatch } = useStore();
+    const save = (s: { firmId: string; name: string }) =>
+      dispatch({
+        type: "apply_extraction",
+        firmId: s.firmId,
+        note: "Talked with Alex.",
+        accepted: ["new_contact"],
+        extraction: { ...extraction, referrals: [], contact: { ...extraction.contact, name: s.name } },
+      });
+    return (
+      <div>
+        <button onClick={() => { save(first); save(second); }}>Save both</button>
+        <pre data-testid="contacts">{JSON.stringify(state.contacts)}</pre>
+      </div>
+    );
+  }
+
+  function alexesAfter(first: { firmId: string; name: string }, second: { firmId: string; name: string }) {
+    render(
+      <StoreProvider>
+        <TwoSaves first={first} second={second} />
+      </StoreProvider>,
+    );
+    fireEvent.click(screen.getByText("Save both"));
+    const contacts = JSON.parse(screen.getByTestId("contacts").textContent ?? "[]") as { name: string; firmId: string }[];
+    return contacts.filter((c) => c.name.trim().toLowerCase() === "alex");
+  }
+
+  it("matches names regardless of case and extra spaces", () => {
+    expect(alexesAfter({ firmId: "gs", name: "Alex" }, { firmId: "gs", name: "  alex " })).toHaveLength(1);
+  });
+
+  it("still adds a same-named person at a different firm", () => {
+    const alexes = alexesAfter({ firmId: "gs", name: "Alex" }, { firmId: "ms", name: "Alex" });
+    expect(alexes.map((c) => c.firmId).sort()).toEqual(["gs", "ms"]);
+  });
+
+  it("doesn't stack a second thank-you task or draft for the same contact", () => {
+    const state = saveTwice(["new_contact", "draft"]);
+    const alexIds = state.contacts.filter((c) => c.name === "Alex" && c.firmId === "gs").map((c) => c.id);
+    expect(state.tasks.filter((t) => alexIds.includes(t.contactId) && t.kind === "thank_you")).toHaveLength(1);
+    expect(state.drafts.filter((d) => alexIds.includes(d.contactId))).toHaveLength(1);
+  });
+
+  it("doesn't duplicate a referral or their reach-out task", () => {
+    const state = saveTwice(["new_contact", "new_lead"]);
+    const jordans = state.contacts.filter((c) => c.name === "Jordan");
+    expect(jordans).toHaveLength(1);
+    expect(state.tasks.filter((t) => t.contactId === jordans[0].id && t.kind === "reach_out")).toHaveLength(1);
+  });
+});
